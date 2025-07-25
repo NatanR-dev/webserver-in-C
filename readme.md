@@ -3,7 +3,8 @@ A Minimal HTTP server in C. <br/>
 - Output a static HTML page on port 8080. 
 - Uses sockets (`sys/socket.h`, `netinet/in.h`). 
 - Sends the HTML page. 
-- Accepts HTML client connections in a loop. Returns (ok)--> HTTP 200 status code.
+- Accepts HTML client connections in a loop.<br/> 
+  - Returns (ok) --> HTTP 200 status code.
 
 ## Index
 - [Windows](#windows)
