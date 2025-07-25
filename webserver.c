@@ -40,6 +40,12 @@ int main() {
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = INADDR_ANY;
     serverAddress.sin_port = htons(PORT);
+    
+    bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
+    listen(serverSocket, 3);
+
+    printf("Server started on port %d...\n", PORT);
+
 
     return 0;
 }
