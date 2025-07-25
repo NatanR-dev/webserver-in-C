@@ -10,6 +10,9 @@ typedef int socklen_t;
 #include <unistd.h>
 #endif
 
+#define PORT 8080
+#define BUFFER_SIZE 1024
+
 void init_sockets() {
     #ifdef _WIN32
     WSADATA wsa;
@@ -31,7 +34,12 @@ void close_connection(int clientConnection) {
     #endif
 }
 
-#define PORT 8080
+void send_html_response(int clientConnection) {
+    char* html = "<html><body><h1>Hello, World!</h1></body></html>";
+    char response[BUFFER_SIZE];
+    sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", strlen(html), html);
+    send(clientConnection, response, strlen(response), 0);
+}
 
 int main() {
     init_sockets();
@@ -52,6 +60,7 @@ int main() {
         socklen_t clientSize = sizeof(clientAddress);
         int clientConnection = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientSize);
         printf("Connection received from %s\n", inet_ntoa(clientAddress.sin_addr));
+        send_html_response(clientConnection);
         close_connection(clientConnection);
     }
 
