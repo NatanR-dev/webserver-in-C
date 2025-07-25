@@ -60,7 +60,15 @@ int main() {
         socklen_t clientSize = sizeof(clientAddress);
         int clientConnection = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientSize);
         printf("Connection received from %s\n", inet_ntoa(clientAddress.sin_addr));
-        send_html_response(clientConnection);
+        
+        while(1){
+            char request[BUFFER_SIZE];
+            int bytesReceived = recv(clientConnection, request, BUFFER_SIZE, 0);
+            if (bytesReceived <= 0) {
+                break;
+            }
+            send_html_response(clientConnection);
+        }
         close_connection(clientConnection);
     }
 
