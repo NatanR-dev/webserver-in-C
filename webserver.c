@@ -1,6 +1,7 @@
 #include <stdio.h>
 #ifdef _WIN32
 #include <winsock2.h>
+
 typedef int socklen_t;
 #else
 #include <sys/socket.h>
@@ -54,6 +55,6 @@ int main() {
         close_connection(clientConnection);
     }
 
-
+    cleanup_sockets();
     return 0;
 }
