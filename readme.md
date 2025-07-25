@@ -21,7 +21,7 @@ A Minimal HTTP server in C. <br/>
 
 **Compile**:
 ```
-gcc main.c -o webserver
+gcc  webserver.c -o webserver -lws2_32
 ```
 
 **Run**:
@@ -35,7 +35,7 @@ gcc main.c -o webserver
 
 **Compile**:
 ```
-gcc main.c -o webserver
+gcc  webserver.c -o webserver
 ```
 
 **Run**:
@@ -50,7 +50,7 @@ gcc main.c -o webserver
 
 **Compile**:
 ```
-gcc main.c -o webserver
+gcc  webserver.c -o webserver
 ```
 
 **Run**:
