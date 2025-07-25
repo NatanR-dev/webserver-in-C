@@ -35,8 +35,9 @@ void close_connection(int clientConnection) {
 }
 
 void send_html_response(int clientConnection) {
-    char* html = "<html><body><h1>Hello, World!</h1></body></html>";
-    char response[BUFFER_SIZE];
+    char html[BUFFER_SIZE];
+    sprintf(html, "<html><body><h1>Hello, World!</h1><sup>Server running on <div style='color: blueviolet;'>port <i>%d</i></div></sup></body></html>", PORT);
+    char response[BUFFER_SIZE * 2]; 
     sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", strlen(html), html);
     send(clientConnection, response, strlen(response), 0);
 }
