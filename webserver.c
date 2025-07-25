@@ -46,6 +46,14 @@ int main() {
 
     printf("Server started on port %d...\n", PORT);
 
+    while (1) {
+        struct sockaddr_in clientAddress = {0};
+        socklen_t clientSize = sizeof(clientAddress);
+        int clientConnection = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientSize);
+        printf("Connection received from %s\n", inet_ntoa(clientAddress.sin_addr));
+        close_connection(clientConnection);
+    }
+
 
     return 0;
 }
