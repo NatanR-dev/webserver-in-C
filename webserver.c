@@ -34,11 +34,21 @@ void close_connection(int clientConnection) {
     #endif
 }
 
+/*
 void send_html_response(int clientConnection) {
     char html[BUFFER_SIZE];
     sprintf(html, "<html><body><h1>Hello, World!</h1><sup>Server running on <div style='color: blueviolet;'>port <i>%d</i></div></sup></body></html>", PORT);
     char response[BUFFER_SIZE * 2]; 
     sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", strlen(html), html);
+    send(clientConnection, response, strlen(response), 0);
+}
+*/
+
+void send_json_response(int clientConnection) {
+    char json[BUFFER_SIZE];
+    sprintf(json, "{\"message\": \"Hello from my API!\", \"port\": %d}", PORT);
+    char response[BUFFER_SIZE * 2];
+    sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", strlen(json), json);
     send(clientConnection, response, strlen(response), 0);
 }
 
@@ -67,7 +77,8 @@ int main() {
             char request[BUFFER_SIZE];
             bytesReceived = recv(clientConnection, request, BUFFER_SIZE, 0);
             if (bytesReceived > 0) {
-                send_html_response(clientConnection);
+                // send_html_response(clientConnection);
+                send_json_response(clientConnection);
             }
         } while (bytesReceived > 0);
         
