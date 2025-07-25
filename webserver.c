@@ -22,6 +22,14 @@ void cleanup_sockets() {
     #endif
 }
 
+void close_connection(int clientConnection) {
+    #ifdef _WIN32
+    closesocket(clientConnection);
+    #else
+    close(clientConnection);
+    #endif
+}
+
 int main() {
 
     return 0;
