@@ -16,7 +16,8 @@ typedef int socklen_t;
 #define BUFFER_SIZE 1024
 #define MAX_ROUTES 10
 
-typedef void (*RouteHandler)(int);
+typedef struct Server Server;
+typedef void (*RouteHandler)(Server*, int);
 
 typedef struct Route {
     char* path;
@@ -66,16 +67,27 @@ void send_json_response(int clientConnection) {
     send(clientConnection, response, strlen(response), 0);
 }
 
-void rootPathHandler(int clientConnection) {
-    char json[BUFFER_SIZE];
-    sprintf(json, "{\"message\": \"Welcome to API\", \"version\": \"1.0.0\", \"available_routes\": [\"/api\"]}");
-    char response[BUFFER_SIZE * 2];
+void rootPathHandler(Server* server, int clientConnection) {
+    char json[BUFFER_SIZE * 2];
+    sprintf(json, "{\"message\": \"Welcome to API\", \"version\": \"1.0\", \"available_routes\": [");
+    for (int i = 0; i < server->routeCount; i++) {
+        sprintf(json + strlen(json), "{\"path\": \"%s\", \"link\": \"http://localhost:8080%s\"}", server->routes[i].path, server->routes[i].path);
+        if (i < server->routeCount - 1) {
+            sprintf(json + strlen(json), ", ");
+        }
+    }
+    sprintf(json + strlen(json), "]}");
+    char response[BUFFER_SIZE * 3];
     sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", strlen(json), json);
     send(clientConnection, response, strlen(response), 0);
 }
 
-void apiHandler(int clientConnection) {
+void apiHandler(Server* server, int clientConnection) {
     send_json_response(clientConnection);
+}
+
+void wrapperHandler(Server* server, int clientConnection, RouteHandler handler) {
+    handler(server, clientConnection);
 }
 
 int handleRequest(Server* server, int clientConnection, char* request) {
@@ -95,7 +107,7 @@ int handleRequest(Server* server, int clientConnection, char* request) {
     for (int i = 0; i < server->routeCount; i++) {
         if (strcmp(server->routes[i].path, path) == 0) {
             printf("Found route for path: %s\n", path);
-            server->routes[i].handler(clientConnection);
+            wrapperHandler(server, clientConnection, server->routes[i].handler);
             return 1;
         }
     }
@@ -157,7 +169,6 @@ int main() {
     server.routeCount = 0;
 
     addRoute(&server, "/", rootPathHandler);
-
     addRoute(&server, "/api", apiHandler);
 
     startServer(&server);
