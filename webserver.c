@@ -73,7 +73,7 @@ void send_json_response(int clientConnection) {
     char json[BUFFER_SIZE];
     snprintf(json, sizeof(json), "{\"message\": \"Hello from my API!\", \"port\": %d}", PORT);
     char response[BUFFER_SIZE * 2];
-    snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: keep-alive\r\n\r\n%s", strlen(json), json);
+    snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: keep-alive\r\n\r\n%s", (int)strlen(json), json);
     send(clientConnection, response, strlen(response), 0);
 }
 
