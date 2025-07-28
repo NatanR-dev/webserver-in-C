@@ -1,0 +1,11 @@
+// Use Rest Client Extension 
+   // --> code --install-extension humao.rest-client
+      // OR --> Ctrl+Shift+X > humao.rest-client
+
+#<Just starts down bellow>
+
+### Root Path
+GET http://localhost:8080
+
+### API Route
+GET http://localhost:8080/api 
