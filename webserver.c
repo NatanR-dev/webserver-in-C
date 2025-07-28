@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #ifdef _WIN32
 #include <winsock2.h>
 
@@ -8,9 +9,8 @@ typedef int socklen_t;
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <unistd.h>
-#include <stdlib.h>
 #endif
+#include <unistd.h>
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
@@ -63,26 +63,32 @@ void addRoute(Server* server, char* path, RouteHandler handler) {
     server->routeCount++;
 }
 
+void cleanupServer(Server* server) {
+    for (int i = 0; i < server->routeCount; i++) {
+        free(server->routes[i].path);
+    }
+}
+
 void send_json_response(int clientConnection) {
     char json[BUFFER_SIZE];
-    sprintf(json, "{\"message\": \"Hello from my API!\", \"port\": %d}", PORT);
+    snprintf(json, sizeof(json), "{\"message\": \"Hello from my API!\", \"port\": %d}", PORT);
     char response[BUFFER_SIZE * 2];
-    sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: keep-alive\r\n\r\n%s", strlen(json), json);
+    snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: keep-alive\r\n\r\n%s", strlen(json), json);
     send(clientConnection, response, strlen(response), 0);
 }
 
 void rootPathHandler(Server* server, int clientConnection) {
     char json[BUFFER_SIZE * 2];
-    sprintf(json, "{\"message\": \"Welcome to API\", \"version\": \"1.0\", \"available_routes\": [");
+    int offset = snprintf(json, sizeof(json), "{\"message\": \"Welcome to API\", \"version\": \"1.0\", \"available_routes\": [");
     for (int i = 0; i < server->routeCount; i++) {
-        sprintf(json + strlen(json), "{\"path\": \"%s\", \"link\": \"http://localhost:8080%s\"}", server->routes[i].path, server->routes[i].path);
+        offset += snprintf(json + offset, sizeof(json) - offset, "{\"path\": \"%s\", \"link\": \"http://localhost:8080%s\"}", server->routes[i].path, server->routes[i].path);
         if (i < server->routeCount - 1) {
-            sprintf(json + strlen(json), ", ");
+            offset += snprintf(json + offset, sizeof(json) - offset, ", ");
         }
     }
-    sprintf(json + strlen(json), "]}");
+    snprintf(json + offset, sizeof(json) - offset, "]}");
     char response[BUFFER_SIZE * 3];
-    sprintf(response, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", strlen(json), json);
+    snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", strlen(json), json);
     send(clientConnection, response, strlen(response), 0);
 }
 
@@ -95,17 +101,19 @@ void wrapperHandler(Server* server, int clientConnection, RouteHandler handler) 
 }
 
 int handleRequest(Server* server, int clientConnection, char* request) {
-    printf("Received request: %s\n", request);
-    char* path = strtok(request, " ");
-    if (path == NULL) {
-        printf("Invalid request\n");
+    char method[10], path[256], version[10];
+    if (sscanf(request, "%9s %255s %9s", method, path, version) != 3) {
+        printf("Invalid request format\n");
         return 0;
     }
-    path = strtok(NULL, " ");
-    if (path == NULL) {
-        printf("Invalid request\n");
+    
+    if (strcmp(method, "GET") != 0) {
+        char response[BUFFER_SIZE];
+        snprintf(response, sizeof(response), "HTTP/1.1 405 Method Not Allowed\r\nContent-Type: text/plain\r\nContent-Length: 18\r\nConnection: close\r\n\r\nMethod Not Allowed");
+        send(clientConnection, response, strlen(response), 0);
         return 0;
     }
+    
     printf("Path: %s\n", path);
 
     for (int i = 0; i < server->routeCount; i++) {
@@ -117,7 +125,7 @@ int handleRequest(Server* server, int clientConnection, char* request) {
     }
 
     char response[BUFFER_SIZE];
-    sprintf(response, "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 9\r\nConnection: close\r\n\r\nNot Found");
+    snprintf(response, sizeof(response), "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 9\r\nConnection: close\r\n\r\nNot Found");
     send(clientConnection, response, strlen(response), 0);
     printf("Sent 404 response\n");
     return 0;
@@ -147,13 +155,27 @@ void handleClient(Server* server, int clientConnection) {
 
 void startServer(Server* server) {
     server->socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (server->socket < 0) {
+        perror("Socket creation failed");
+        exit(1);
+    }
+    
     struct sockaddr_in serverAddress = {0};
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = INADDR_ANY;
     serverAddress.sin_port = htons(PORT);
     
-    bind(server->socket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
-    listen(server->socket, 3);
+    if (bind(server->socket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) {
+        perror("Bind failed");
+        close(server->socket);
+        exit(1);
+    }
+    
+    if (listen(server->socket, 3) < 0) {
+        perror("Listen failed");
+        close(server->socket);
+        exit(1);
+    }
 
     printf("Server started on port %d...\n", PORT);
 
@@ -161,6 +183,10 @@ void startServer(Server* server) {
         struct sockaddr_in clientAddress = {0};
         socklen_t clientSize = sizeof(clientAddress);
         int clientConnection = accept(server->socket, (struct sockaddr*)&clientAddress, &clientSize);
+        if (clientConnection < 0) {
+            perror("Accept failed");
+            continue;
+        }
         printf("Connection received from %s\n", inet_ntoa(clientAddress.sin_addr));
         handleClient(server, clientConnection);
     }
@@ -169,14 +195,14 @@ void startServer(Server* server) {
 int main() {
     init_sockets();
 
-    Server server;
-    server.routeCount = 0;
+    Server server = {0};
 
     addRoute(&server, "/", rootPathHandler);
     addRoute(&server, "/api", apiHandler);
 
     startServer(&server);
 
+    cleanupServer(&server);
     cleanup_sockets();
     return 0;
 }
