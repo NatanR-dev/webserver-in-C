@@ -176,10 +176,24 @@ void systemInfoHandler(Server* server, int clientConnection) {
                 processorArchitecture = "Unknown";
                 break;
         }
-        unsigned int numberOfCores = sysInfo.dwNumberOfProcessors; 
+
         unsigned int numberOfLogicalProcessors = sysInfo.dwNumberOfProcessors;
+
+        DWORD bufferSize = 0;
+        GetLogicalProcessorInformationEx(RelationProcessorCore, NULL, &bufferSize);
+        PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)malloc(bufferSize);
+        GetLogicalProcessorInformationEx(RelationProcessorCore, buffer, &bufferSize);
+        unsigned int numberOfCores = 0;
+        for (DWORD i = 0; i < bufferSize; i += buffer->Size) {
+            PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX current = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)((char*)buffer + i);
+            if (current->Relationship == RelationProcessorCore) {
+                numberOfCores++;
+            }
+        }
+        free(buffer);
+
         snprintf(json, sizeof(json), "{\"os\": \"Windows\", \"arch\": \"%d\", \"processorArchitecture\": \"%s\", \"numberOfCores\": \"%u\", \"numberOfLogicalProcessors\": \"%u\", \"processorCount\": \"%u\", \"datetime\": \"%s\"}", 
-            arch, processorArchitecture, numberOfCores, numberOfLogicalProcessors, sysInfo.dwNumberOfProcessors, datetime);
+            arch, processorArchitecture, numberOfCores, numberOfLogicalProcessors, numberOfLogicalProcessors, datetime);
     #elif defined(__linux__)
         struct utsname uname_data;
         uname(&uname_data);
