@@ -108,18 +108,14 @@ void rootPathHandler(Server* server, int clientConnection) {
     snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", (int)strlen(json), json);
     int bytesSent = send(clientConnection, response, strlen(response), 0);
     if (bytesSent < 0) {
-        perror("Erro ao enviar resposta");
+        perror("Error sending response");
     } else if ((size_t)bytesSent != strlen(response)) {
-        printf("Erro ao enviar resposta completa\n");
+        printf("Error sending complete response\n");
     }
 }
 
 void apiHandler(Server* server, int clientConnection) {
     send_json_response(clientConnection);
-}
-
-void wrapperHandler(Server* server, int clientConnection, RouteHandler handler) {
-    handler(server, clientConnection);
 }
 
 int handleRequest(Server* server, int clientConnection, char* request) {
@@ -141,7 +137,7 @@ int handleRequest(Server* server, int clientConnection, char* request) {
     for (int i = 0; i < server->routeCount; i++) {
         if (strcmp(server->routes[i].path, path) == 0) {
             printf("Found route for path: %s\n", path);
-            wrapperHandler(server, clientConnection, server->routes[i].handler);
+            server->routes[i].handler(server, clientConnection);
             return 1;
         }
     }
