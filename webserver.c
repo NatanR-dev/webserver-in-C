@@ -69,12 +69,16 @@ void cleanupServer(Server* server) {
     }
 }
 
+void send_http_response(int clientConnection, int status_code, const char* status_message, const char* content_type, const char* body, const char* connection) {
+    char response[BUFFER_SIZE * 2];
+    snprintf(response, sizeof(response), "HTTP/1.1 %d %s\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: %s\r\nContent-Length: %d\r\nConnection: %s\r\n\r\n%s", status_code, status_message, content_type, (int)strlen(body), connection, body);
+    send(clientConnection, response, strlen(response), 0);
+}
+
 void send_json_response(int clientConnection) {
     char json[BUFFER_SIZE];
     snprintf(json, sizeof(json), "{\"message\": \"Hello from my API!\", \"port\": %d}", PORT);
-    char response[BUFFER_SIZE * 2];
-    snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: keep-alive\r\n\r\n%s", (int)strlen(json), json);
-    send(clientConnection, response, strlen(response), 0);
+    send_http_response(clientConnection, 200, "OK", "application/json", json, "keep-alive");
 }
 
 void json_escape_string(const char* input, char* output, size_t output_size) {
@@ -104,33 +108,26 @@ void rootPathHandler(Server* server, int clientConnection) {
         }
     }
     snprintf(json + offset, sizeof(json) - offset, "]}");
-    char response[BUFFER_SIZE * 3];
-    snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", (int)strlen(json), json);
-    int bytesSent = send(clientConnection, response, strlen(response), 0);
-    if (bytesSent < 0) {
-        perror("Error sending response");
-    } else if ((size_t)bytesSent != strlen(response)) {
-        printf("Error sending complete response\n");
-    }
+    send_http_response(clientConnection, 200, "OK", "application/json", json, "close");
 }
 
 void apiHandler(Server* server, int clientConnection) {
     send_json_response(clientConnection);
 }
 
+void send_error_response(int clientConnection, int status_code, const char* status_message, const char* body) {
+    send_http_response(clientConnection, status_code, status_message, "text/plain", body, "close");
+}
+
 int handleRequest(Server* server, int clientConnection, char* request) {
     char method[10], path[256], version[10];
     if (sscanf(request, "%9s %255s %9s", method, path, version) != 3) {
-        char response[BUFFER_SIZE];
-        snprintf(response, sizeof(response), "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: 11\r\nConnection: close\r\n\r\nBad Request");
-        send(clientConnection, response, strlen(response), 0);
+        send_error_response(clientConnection, 400, "Bad Request", "Bad Request");
         return 0;
     }
 
     if (strcmp(method, "GET") != 0) {
-        char response[BUFFER_SIZE];
-        snprintf(response, sizeof(response), "HTTP/1.1 405 Method Not Allowed\r\nContent-Type: text/plain\r\nContent-Length: 18\r\nConnection: close\r\n\r\nMethod Not Allowed");
-        send(clientConnection, response, strlen(response), 0);
+        send_error_response(clientConnection, 405, "Method Not Allowed", "Method Not Allowed");
         return 0;
     }
 
@@ -142,9 +139,7 @@ int handleRequest(Server* server, int clientConnection, char* request) {
         }
     }
 
-    char response[BUFFER_SIZE];
-    snprintf(response, sizeof(response), "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 9\r\nConnection: close\r\n\r\nNot Found");
-    send(clientConnection, response, strlen(response), 0);
+    send_error_response(clientConnection, 404, "Not Found", "Not Found");
     printf("Sent 404 response\n");
     return 0;
 }
