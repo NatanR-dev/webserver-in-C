@@ -75,9 +75,13 @@ void cleanupServer(Server* server) {
 }
 
 void send_http_response(int clientConnection, int status_code, const char* status_message, const char* content_type, const char* body, const char* connection) {
-    char response[BUFFER_SIZE * 2];
-    snprintf(response, sizeof(response), "HTTP/1.1 %d %s\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: %s\r\nContent-Length: %d\r\nConnection: %s\r\n\r\n%s", status_code, status_message, content_type, (int)strlen(body), connection, body);
+    int required_size = snprintf(NULL, 0, "HTTP/1.1 %d %s\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: %s\r\nContent-Length: %d\r\nConnection: %s\r\n\r\n%s", 
+                                status_code, status_message, content_type, (int)strlen(body), connection, body) + 1;
+    char* response = malloc(required_size);
+    if (!response) return;
+    snprintf(response, required_size, "HTTP/1.1 %d %s\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: %s\r\nContent-Length: %d\r\nConnection: %s\r\n\r\n%s", status_code, status_message, content_type, (int)strlen(body), connection, body);
     send(clientConnection, response, strlen(response), 0);
+    free(response);
 }
 
 void send_json_response(int clientConnection, const char* json) {
