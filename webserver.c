@@ -88,7 +88,7 @@ void rootPathHandler(Server* server, int clientConnection) {
     }
     snprintf(json + offset, sizeof(json) - offset, "]}");
     char response[BUFFER_SIZE * 3];
-    snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", strlen(json), json);
+    snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", (int)strlen(json), json);
     send(clientConnection, response, strlen(response), 0);
 }
 
