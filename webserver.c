@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #ifdef _WIN32
 #include <winsock2.h>
+#include <windows.h>
 
 typedef int socklen_t;
 #else
@@ -11,6 +12,9 @@ typedef int socklen_t;
 #include <arpa/inet.h>
 #endif
 #include <time.h>
+#if defined(__linux__) || defined(__APPLE__)
+#include <sys/utsname.h>
+#endif
 #include <unistd.h>
 
 #define PORT 8080
