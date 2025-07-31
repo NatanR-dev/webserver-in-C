@@ -166,6 +166,7 @@ void handleClient(Server* server, int clientConnection) {
             break;
         } else {
             printf("Error receiving request: %d\n", bytesReceived);
+            close_connection(clientConnection);
             break;
         }
     }
