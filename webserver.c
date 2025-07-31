@@ -176,21 +176,21 @@ void systemInfoHandler(Server* server, int clientConnection) {
                 processorArchitecture = "Unknown";
                 break;
         }
-        unsigned int numberOfCores = sysInfo.dwNumberOfProcessors; // Logical processors only; use GetLogicalProcessorInformationEx for physical cores
+        unsigned int numberOfCores = sysInfo.dwNumberOfProcessors; 
         unsigned int numberOfLogicalProcessors = sysInfo.dwNumberOfProcessors;
-        snprintf(json, sizeof(json), "{\"os\": \"Windows\", \"arch\": \"%d\", \"processorArchitecture\": \"%s\", \"numberOfCores\": \"%d\", \"numberOfLogicalProcessors\": \"%d\", \"processorCount\": \"%d\", \"datetime\": \"%s\"}", 
+        snprintf(json, sizeof(json), "{\"os\": \"Windows\", \"arch\": \"%d\", \"processorArchitecture\": \"%s\", \"numberOfCores\": \"%u\", \"numberOfLogicalProcessors\": \"%u\", \"processorCount\": \"%u\", \"datetime\": \"%s\"}", 
             arch, processorArchitecture, numberOfCores, numberOfLogicalProcessors, sysInfo.dwNumberOfProcessors, datetime);
     #elif defined(__linux__)
         struct utsname uname_data;
         uname(&uname_data);
         unsigned int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
-        snprintf(json, sizeof(json), "{\"os\": \"Linux\", \"sysname\": \"%s\", \"release\": \"%s\", \"version\": \"%s\", \"machine\": \"%s\", \"numberOfCores\": \"%d\", \"numberOfLogicalProcessors\": \"%d\", \"datetime\": \"%s\"}", 
+        snprintf(json, sizeof(json), "{\"os\": \"Linux\", \"sysname\": \"%s\", \"release\": \"%s\", \"version\": \"%s\", \"machine\": \"%s\", \"numberOfCores\": \"%u\", \"numberOfLogicalProcessors\": \"%u\", \"datetime\": \"%s\"}", 
             uname_data.sysname, uname_data.release, uname_data.version, uname_data.machine, num_cores, num_cores, datetime);
     #elif defined(__APPLE__)
         struct utsname uname_data;
         uname(&uname_data);
         unsigned int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
-        snprintf(json, sizeof(json), "{\"os\": \"macOS\", \"sysname\": \"%s\", \"release\": \"%s\", \"version\": \"%s\", \"machine\": \"%s\", \"numberOfCores\": \"%d\", \"numberOfLogicalProcessors\": \"%d\", \"datetime\": \"%s\"}", 
+        snprintf(json, sizeof(json), "{\"os\": \"macOS\", \"sysname\": \"%s\", \"release\": \"%s\", \"version\": \"%s\", \"machine\": \"%s\", \"numberOfCores\": \"%u\", \"numberOfLogicalProcessors\": \"%u\", \"datetime\": \"%s\"}", 
             uname_data.sysname, uname_data.release, uname_data.version, uname_data.machine, num_cores, num_cores, datetime);
     #else
         snprintf(json, sizeof(json), "{\"os\": \"Unknown\", \"datetime\": \"%s\"}", datetime);
