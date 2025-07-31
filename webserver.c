@@ -114,6 +114,22 @@ void apiHandler(Server* server, int clientConnection) {
     send_json_response(clientConnection, "{\"message\": \"Hello from my API!\", \"port\": 8080}");
 }
 
+void osHandler(Server* server, int clientConnection) {
+    char json[BUFFER_SIZE];
+
+    #ifdef _WIN32
+        snprintf(json, sizeof(json), "{\"os\": \"Windows\"}");
+    #elif defined(__linux__)
+        snprintf(json, sizeof(json), "{\"os\": \"Linux\"}");
+    #elif defined(__APPLE__)
+        snprintf(json, sizeof(json), "{\"os\": \"macOS\"}");
+    #else
+        snprintf(json, sizeof(json), "{\"os\": \"Unknown\"}");
+    #endif
+
+    send_json_response(clientConnection, json);
+}
+
 void systemInfoHandler(Server* server, int clientConnection) {
     char json[BUFFER_SIZE];
 
@@ -261,7 +277,8 @@ int main() {
 
     addRoute(&server, "/", rootPathHandler);
     addRoute(&server, "/api", apiHandler);
-    addRoute(&server, "/system", systemInfoHandler);
+    addRoute(&server, "/os", osHandler);
+    addRoute(&server, "/sys", systemInfoHandler);
 
     startServer(&server);
 
