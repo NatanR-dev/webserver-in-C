@@ -10,6 +10,7 @@ typedef int socklen_t;
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
+#include <time.h>
 #include <unistd.h>
 
 #define PORT 8080
@@ -75,9 +76,7 @@ void send_http_response(int clientConnection, int status_code, const char* statu
     send(clientConnection, response, strlen(response), 0);
 }
 
-void send_json_response(int clientConnection) {
-    char json[BUFFER_SIZE];
-    snprintf(json, sizeof(json), "{\"message\": \"Hello from my API!\", \"port\": %d}", PORT);
+void send_json_response(int clientConnection, const char* json) {
     send_http_response(clientConnection, 200, "OK", "application/json", json, "keep-alive");
 }
 
@@ -108,11 +107,58 @@ void rootPathHandler(Server* server, int clientConnection) {
         }
     }
     snprintf(json + offset, sizeof(json) - offset, "]}");
-    send_http_response(clientConnection, 200, "OK", "application/json", json, "close");
+    send_json_response(clientConnection, json);
 }
 
 void apiHandler(Server* server, int clientConnection) {
-    send_json_response(clientConnection);
+    send_json_response(clientConnection, "{\"message\": \"Hello from my API!\", \"port\": 8080}");
+}
+
+void systemInfoHandler(Server* server, int clientConnection) {
+    char json[BUFFER_SIZE];
+
+    time_t now = time(NULL);
+    struct tm* timeinfo = localtime(&now);
+    char datetime[20];
+    strftime(datetime, sizeof(datetime), "%Y-%m-%d %H:%M:%S", timeinfo);
+
+    #ifdef _WIN32
+        SYSTEM_INFO sysInfo;
+        GetSystemInfo(&sysInfo);
+        int arch = sysInfo.wProcessorArchitecture;
+        char* processorArchitecture;
+        switch (arch) {
+            case 0:
+                processorArchitecture = "x86";
+                break;
+            case 9:
+                processorArchitecture = "x64";
+                break;
+            default:
+                processorArchitecture = "Unknown";
+                break;
+        }
+        unsigned int numberOfCores = sysInfo.dwNumberOfProcessors; // Não é possível obter o número de núcleos físicos diretamente no Windows sem usar APIs mais avançadas
+        unsigned int numberOfLogicalProcessors = sysInfo.dwNumberOfProcessors;
+        snprintf(json, sizeof(json), "{\"os\": \"Windows\", \"arch\": \"%d\", \"processorArchitecture\": \"%s\", \"numberOfCores\": \"%d\", \"numberOfLogicalProcessors\": \"%d\", \"processorCount\": \"%d\", \"datetime\": \"%s\"}", 
+            arch, processorArchitecture, numberOfCores, numberOfLogicalProcessors, sysInfo.dwNumberOfProcessors, datetime);
+    #elif defined(__linux__)
+        struct utsname uname_data;
+        uname(&uname_data);
+        unsigned int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+        snprintf(json, sizeof(json), "{\"os\": \"Linux\", \"sysname\": \"%s\", \"release\": \"%s\", \"version\": \"%s\", \"machine\": \"%s\", \"numberOfCores\": \"%d\", \"numberOfLogicalProcessors\": \"%d\", \"datetime\": \"%s\"}", 
+            uname_data.sysname, uname_data.release, uname_data.version, uname_data.machine, num_cores, num_cores, datetime);
+    #elif defined(__APPLE__)
+        struct utsname uname_data;
+        uname(&uname_data);
+        unsigned int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+        snprintf(json, sizeof(json), "{\"os\": \"macOS\", \"sysname\": \"%s\", \"release\": \"%s\", \"version\": \"%s\", \"machine\": \"%s\", \"numberOfCores\": \"%d\", \"numberOfLogicalProcessors\": \"%d\", \"datetime\": \"%s\"}", 
+            uname_data.sysname, uname_data.release, uname_data.version, uname_data.machine, num_cores, num_cores, datetime);
+    #else
+        snprintf(json, sizeof(json), "{\"os\": \"Unknown\", \"datetime\": \"%s\"}", datetime);
+    #endif
+
+    send_json_response(clientConnection, json);
 }
 
 void send_error_response(int clientConnection, int status_code, const char* status_message, const char* body) {
@@ -215,6 +261,7 @@ int main() {
 
     addRoute(&server, "/", rootPathHandler);
     addRoute(&server, "/api", apiHandler);
+    addRoute(&server, "/system", systemInfoHandler);
 
     startServer(&server);
 
