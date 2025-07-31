@@ -77,11 +77,28 @@ void send_json_response(int clientConnection) {
     send(clientConnection, response, strlen(response), 0);
 }
 
+void json_escape_string(const char* input, char* output, size_t output_size) {
+    size_t j = 0;
+    for (size_t i = 0; input[i] && j < output_size - 2; i++) {
+        if (input[i] == '"' || input[i] == '\\') {
+            if (j < output_size - 3) {
+                output[j++] = '\\';
+                output[j++] = input[i];
+            }
+        } else {
+            output[j++] = input[i];
+        }
+    }
+    output[j] = '\0';
+}
+
 void rootPathHandler(Server* server, int clientConnection) {
     char json[BUFFER_SIZE * 2];
     int offset = snprintf(json, sizeof(json), "{\"message\": \"Welcome to API\", \"version\": \"1.0\", \"available_routes\": [");
     for (int i = 0; i < server->routeCount; i++) {
-        offset += snprintf(json + offset, sizeof(json) - offset, "{\"path\": \"%s\", \"link\": \"http://localhost:8080%s\"}", server->routes[i].path, server->routes[i].path);
+        char escaped_path[512];
+        json_escape_string(server->routes[i].path, escaped_path, sizeof(escaped_path));
+        offset += snprintf(json + offset, sizeof(json) - offset, "{\"path\": \"%s\", \"link\": \"http://localhost:8080%s\"}", escaped_path, escaped_path);
         if (i < server->routeCount - 1) {
             offset += snprintf(json + offset, sizeof(json) - offset, ", ");
         }
