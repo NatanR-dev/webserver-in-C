@@ -96,7 +96,7 @@ void rootPathHandler(Server* server, int clientConnection) {
     char json[BUFFER_SIZE * 2];
     int offset = snprintf(json, sizeof(json), "{\"message\": \"Welcome to API\", \"version\": \"1.0\", \"available_routes\": [");
     for (int i = 0; i < server->routeCount; i++) {
-        char escaped_path[512];
+        char escaped_path[1024];
         json_escape_string(server->routes[i].path, escaped_path, sizeof(escaped_path));
         offset += snprintf(json + offset, sizeof(json) - offset, "{\"path\": \"%s\", \"link\": \"http://localhost:8080%s\"}", escaped_path, escaped_path);
         if (i < server->routeCount - 1) {
