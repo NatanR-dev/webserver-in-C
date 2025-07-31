@@ -156,13 +156,47 @@ void handleClient(Server* server, int clientConnection) {
         if (bytesReceived > 0) {
             request[bytesReceived] = '\0';
             printf("Received request: %s\n", request);
-            if (handleRequest(server, clientConnection, request) == 0) {
+
+            char method[10], path[256], version[10];
+            if (sscanf(request, "%9s %255s %9s", method, path, version) != 3) {
+                printf("Invalid request format\n");
+                char response[BUFFER_SIZE];
+                snprintf(response, sizeof(response), "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: 11\r\nConnection: close\r\n\r\nBad Request");
+                send(clientConnection, response, strlen(response), 0);
+                close_connection(clientConnection);
+                printf("Connection closed\n");
+                break;
+            }
+
+            if (strcmp(method, "GET") != 0) {
+                char response[BUFFER_SIZE];
+                snprintf(response, sizeof(response), "HTTP/1.1 405 Method Not Allowed\r\nContent-Type: text/plain\r\nContent-Length: 18\r\nConnection: close\r\n\r\nMethod Not Allowed");
+                send(clientConnection, response, strlen(response), 0);
+                close_connection(clientConnection);
+                printf("Connection closed\n");
+                break;
+            }
+
+            int routeFound = 0;
+            for (int i = 0; i < server->routeCount; i++) {
+                if (strcmp(server->routes[i].path, path) == 0) {
+                    server->routes[i].handler(server, clientConnection);
+                    routeFound = 1;
+                    break;
+                }
+            }
+
+            if (!routeFound) {
+                char response[BUFFER_SIZE];
+                snprintf(response, sizeof(response), "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 9\r\nConnection: close\r\n\r\nNot Found");
+                send(clientConnection, response, strlen(response), 0);
                 close_connection(clientConnection);
                 printf("Connection closed\n");
                 break;
             }
         } else if (bytesReceived == 0) {
             printf("Client disconnected\n");
+            close_connection(clientConnection);
             break;
         } else {
             printf("Error receiving request: %d\n", bytesReceived);
