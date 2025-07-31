@@ -106,7 +106,12 @@ void rootPathHandler(Server* server, int clientConnection) {
     snprintf(json + offset, sizeof(json) - offset, "]}");
     char response[BUFFER_SIZE * 3];
     snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", (int)strlen(json), json);
-    send(clientConnection, response, strlen(response), 0);
+    int bytesSent = send(clientConnection, response, strlen(response), 0);
+    if (bytesSent < 0) {
+        perror("Erro ao enviar resposta");
+    } else if ((size_t)bytesSent != strlen(response)) {
+        printf("Erro ao enviar resposta completa\n");
+    }
 }
 
 void apiHandler(Server* server, int clientConnection) {
