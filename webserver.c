@@ -100,18 +100,36 @@ void json_escape_string(const char* input, char* output, size_t output_size) {
 }
 
 void rootPathHandler(Server* server, int clientConnection) {
-    char json[BUFFER_SIZE * 2];
-    int offset = snprintf(json, sizeof(json), "{\"message\": \"Welcome to API\", \"version\": \"1.0\", \"available_routes\": [");
+    int size = snprintf(NULL, 0, "{\"message\": \"Welcome to API\", \"version\": \"1.0\", \"available_routes\": [");
     for (int i = 0; i < server->routeCount; i++) {
         char escaped_path[1024];
         json_escape_string(server->routes[i].path, escaped_path, sizeof(escaped_path));
-        offset += snprintf(json + offset, sizeof(json) - offset, "{\"path\": \"%s\", \"link\": \"http://localhost:8080%s\"}", escaped_path, escaped_path);
+        size += snprintf(NULL, 0, "{\"path\": \"%s\", \"link\": \"http://localhost:8080%s\"}", escaped_path, escaped_path);
         if (i < server->routeCount - 1) {
-            offset += snprintf(json + offset, sizeof(json) - offset, ", ");
+            size += snprintf(NULL, 0, ", ");
         }
     }
-    snprintf(json + offset, sizeof(json) - offset, "]}");
+    size += snprintf(NULL, 0, "]}");
+    size++; 
+
+    char* json = malloc(size);
+    if (json == NULL) {
+        return;
+    }
+
+    int offset = snprintf(json, size, "{\"message\": \"Welcome to API\", \"version\": \"1.0\", \"available_routes\": [");
+    for (int i = 0; i < server->routeCount; i++) {
+        char escaped_path[1024];
+        json_escape_string(server->routes[i].path, escaped_path, sizeof(escaped_path));
+        offset += snprintf(json + offset, size - offset, "{\"path\": \"%s\", \"link\": \"http://localhost:8080%s\"}", escaped_path, escaped_path);
+        if (i < server->routeCount - 1) {
+            offset += snprintf(json + offset, size - offset, ", ");
+        }
+    }
+    snprintf(json + offset, size - offset, "]}");
+
     send_json_response(clientConnection, json);
+    free(json);
 }
 
 void apiHandler(Server* server, int clientConnection) {
@@ -158,7 +176,7 @@ void systemInfoHandler(Server* server, int clientConnection) {
                 processorArchitecture = "Unknown";
                 break;
         }
-        unsigned int numberOfCores = sysInfo.dwNumberOfProcessors; // Não é possível obter o número de núcleos físicos diretamente no Windows sem usar APIs mais avançadas
+        unsigned int numberOfCores = sysInfo.dwNumberOfProcessors; // Logical processors only; use GetLogicalProcessorInformationEx for physical cores
         unsigned int numberOfLogicalProcessors = sysInfo.dwNumberOfProcessors;
         snprintf(json, sizeof(json), "{\"os\": \"Windows\", \"arch\": \"%d\", \"processorArchitecture\": \"%s\", \"numberOfCores\": \"%d\", \"numberOfLogicalProcessors\": \"%d\", \"processorCount\": \"%d\", \"datetime\": \"%s\"}", 
             arch, processorArchitecture, numberOfCores, numberOfLogicalProcessors, sysInfo.dwNumberOfProcessors, datetime);
