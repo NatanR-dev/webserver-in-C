@@ -18,7 +18,7 @@ typedef int socklen_t;
 #include <unistd.h>
 
 #define PORT 8080
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 4096
 #define MAX_ROUTES 10
 
 typedef struct Server Server;
@@ -89,16 +89,23 @@ void send_json_response(int clientConnection, const char* json) {
 }
 
 void json_escape_string(const char* input, char* output, size_t output_size) {
+    size_t i = 0;
     size_t j = 0;
-    for (size_t i = 0; input[i] && j < output_size - 2; i++) {
-        if (input[i] == '"' || input[i] == '\\') {
-            if (j < output_size - 3) {
+    while (i < strlen(input) && j < output_size - 1) {
+        switch (input[i]) {
+            case '\\':
                 output[j++] = '\\';
+                output[j++] = '\\';
+                break;
+            case '"':
+                output[j++] = '\\';
+                output[j++] = '"';
+                break;
+            default:
                 output[j++] = input[i];
-            }
-        } else {
-            output[j++] = input[i];
+                break;
         }
+        i++;
     }
     output[j] = '\0';
 }
@@ -185,7 +192,13 @@ void systemInfoHandler(Server* server, int clientConnection) {
 
         DWORD bufferSize = 0;
         GetLogicalProcessorInformationEx(RelationProcessorCore, NULL, &bufferSize);
+        if (bufferSize == 0) {
+            return;
+        }
         PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)malloc(bufferSize);
+        if (!buffer) {
+            return;
+        }
         GetLogicalProcessorInformationEx(RelationProcessorCore, buffer, &bufferSize);
         unsigned int numberOfCores = 0;
         for (DWORD i = 0; i < bufferSize; i += buffer->Size) {
@@ -196,20 +209,37 @@ void systemInfoHandler(Server* server, int clientConnection) {
         }
         free(buffer);
 
+        char escaped_processorArchitecture[256];
+        json_escape_string(processorArchitecture, escaped_processorArchitecture, sizeof(escaped_processorArchitecture));
+
         snprintf(json, sizeof(json), "{\"os\": \"Windows\", \"arch\": \"%d\", \"processorArchitecture\": \"%s\", \"numberOfCores\": \"%u\", \"numberOfLogicalProcessors\": \"%u\", \"processorCount\": \"%u\", \"datetime\": \"%s\"}", 
-            arch, processorArchitecture, numberOfCores, numberOfLogicalProcessors, numberOfLogicalProcessors, datetime);
+            arch, escaped_processorArchitecture, numberOfCores, numberOfLogicalProcessors, numberOfLogicalProcessors, datetime);
     #elif defined(__linux__)
         struct utsname uname_data;
         uname(&uname_data);
         unsigned int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+
+        char escaped_sysname[512], escaped_release[512], escaped_version[512], escaped_machine[512];
+        json_escape_string(uname_data.sysname, escaped_sysname, sizeof(escaped_sysname));
+        json_escape_string(uname_data.release, escaped_release, sizeof(escaped_release));
+        json_escape_string(uname_data.version, escaped_version, sizeof(escaped_version));
+        json_escape_string(uname_data.machine, escaped_machine, sizeof(escaped_machine));
+
         snprintf(json, sizeof(json), "{\"os\": \"Linux\", \"sysname\": \"%s\", \"release\": \"%s\", \"version\": \"%s\", \"machine\": \"%s\", \"numberOfCores\": \"%u\", \"numberOfLogicalProcessors\": \"%u\", \"datetime\": \"%s\"}", 
-            uname_data.sysname, uname_data.release, uname_data.version, uname_data.machine, num_cores, num_cores, datetime);
+            escaped_sysname, escaped_release, escaped_version, escaped_machine, num_cores, num_cores, datetime);
     #elif defined(__APPLE__)
         struct utsname uname_data;
         uname(&uname_data);
         unsigned int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+
+        char escaped_sysname[512], escaped_release[512], escaped_version[512], escaped_machine[512];
+        json_escape_string(uname_data.sysname, escaped_sysname, sizeof(escaped_sysname));
+        json_escape_string(uname_data.release, escaped_release, sizeof(escaped_release));
+        json_escape_string(uname_data.version, escaped_version, sizeof(escaped_version));
+        json_escape_string(uname_data.machine, escaped_machine, sizeof(escaped_machine));
+
         snprintf(json, sizeof(json), "{\"os\": \"macOS\", \"sysname\": \"%s\", \"release\": \"%s\", \"version\": \"%s\", \"machine\": \"%s\", \"numberOfCores\": \"%u\", \"numberOfLogicalProcessors\": \"%u\", \"datetime\": \"%s\"}", 
-            uname_data.sysname, uname_data.release, uname_data.version, uname_data.machine, num_cores, num_cores, datetime);
+            escaped_sysname, escaped_release, escaped_version, escaped_machine, num_cores, num_cores, datetime);
     #else
         snprintf(json, sizeof(json), "{\"os\": \"Unknown\", \"datetime\": \"%s\"}", datetime);
     #endif
