@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #ifdef _WIN32
 #include <winsock2.h>
+#include <windows.h>
 
 typedef int socklen_t;
 #else
@@ -10,10 +11,14 @@ typedef int socklen_t;
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
+#include <time.h>
+#if defined(__linux__) || defined(__APPLE__)
+#include <sys/utsname.h>
+#endif
 #include <unistd.h>
 
 #define PORT 8080
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 4096
 #define MAX_ROUTES 10
 
 typedef struct Server Server;
@@ -69,68 +74,192 @@ void cleanupServer(Server* server) {
     }
 }
 
-void send_json_response(int clientConnection) {
-    char json[BUFFER_SIZE];
-    snprintf(json, sizeof(json), "{\"message\": \"Hello from my API!\", \"port\": %d}", PORT);
-    char response[BUFFER_SIZE * 2];
-    snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: keep-alive\r\n\r\n%s", (int)strlen(json), json);
+void send_http_response(int clientConnection, int status_code, const char* status_message, const char* content_type, const char* body, const char* connection) {
+    int required_size = snprintf(NULL, 0, "HTTP/1.1 %d %s\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: %s\r\nContent-Length: %d\r\nConnection: %s\r\n\r\n%s", 
+                                status_code, status_message, content_type, (int)strlen(body), connection, body) + 1;
+    char* response = malloc(required_size);
+    if (!response) return;
+    snprintf(response, required_size, "HTTP/1.1 %d %s\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: %s\r\nContent-Length: %d\r\nConnection: %s\r\n\r\n%s", status_code, status_message, content_type, (int)strlen(body), connection, body);
     send(clientConnection, response, strlen(response), 0);
+    free(response);
+}
+
+void send_json_response(int clientConnection, const char* json) {
+    send_http_response(clientConnection, 200, "OK", "application/json", json, "keep-alive");
 }
 
 void json_escape_string(const char* input, char* output, size_t output_size) {
+    size_t i = 0;
     size_t j = 0;
-    for (size_t i = 0; input[i] && j < output_size - 2; i++) {
-        if (input[i] == '"' || input[i] == '\\') {
-            if (j < output_size - 3) {
+    while (i < strlen(input) && j < output_size - 1) {
+        switch (input[i]) {
+            case '\\':
                 output[j++] = '\\';
+                output[j++] = '\\';
+                break;
+            case '"':
+                output[j++] = '\\';
+                output[j++] = '"';
+                break;
+            default:
                 output[j++] = input[i];
-            }
-        } else {
-            output[j++] = input[i];
+                break;
         }
+        i++;
     }
     output[j] = '\0';
 }
 
 void rootPathHandler(Server* server, int clientConnection) {
-    char json[BUFFER_SIZE * 2];
-    int offset = snprintf(json, sizeof(json), "{\"message\": \"Welcome to API\", \"version\": \"1.0\", \"available_routes\": [");
+    int size = snprintf(NULL, 0, "{\"message\": \"Welcome to API\", \"version\": \"1.0\", \"available_routes\": [");
     for (int i = 0; i < server->routeCount; i++) {
         char escaped_path[1024];
         json_escape_string(server->routes[i].path, escaped_path, sizeof(escaped_path));
-        offset += snprintf(json + offset, sizeof(json) - offset, "{\"path\": \"%s\", \"link\": \"http://localhost:8080%s\"}", escaped_path, escaped_path);
+        size += snprintf(NULL, 0, "{\"path\": \"%s\", \"link\": \"http://localhost:8080%s\"}", escaped_path, escaped_path);
         if (i < server->routeCount - 1) {
-            offset += snprintf(json + offset, sizeof(json) - offset, ", ");
+            size += snprintf(NULL, 0, ", ");
         }
     }
-    snprintf(json + offset, sizeof(json) - offset, "]}");
-    char response[BUFFER_SIZE * 3];
-    snprintf(response, sizeof(response), "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: %d\r\nConnection: close\r\n\r\n%s", (int)strlen(json), json);
-    int bytesSent = send(clientConnection, response, strlen(response), 0);
-    if (bytesSent < 0) {
-        perror("Error sending response");
-    } else if ((size_t)bytesSent != strlen(response)) {
-        printf("Error sending complete response\n");
+    size += snprintf(NULL, 0, "]}");
+    size++; 
+
+    char* json = malloc(size);
+    if (json == NULL) {
+        return;
     }
+
+    int offset = snprintf(json, size, "{\"message\": \"Welcome to API\", \"version\": \"1.0\", \"available_routes\": [");
+    for (int i = 0; i < server->routeCount; i++) {
+        char escaped_path[1024];
+        json_escape_string(server->routes[i].path, escaped_path, sizeof(escaped_path));
+        offset += snprintf(json + offset, size - offset, "{\"path\": \"%s\", \"link\": \"http://localhost:8080%s\"}", escaped_path, escaped_path);
+        if (i < server->routeCount - 1) {
+            offset += snprintf(json + offset, size - offset, ", ");
+        }
+    }
+    snprintf(json + offset, size - offset, "]}");
+
+    send_json_response(clientConnection, json);
+    free(json);
 }
 
 void apiHandler(Server* server, int clientConnection) {
-    send_json_response(clientConnection);
+    send_json_response(clientConnection, "{\"message\": \"Hello from my API!\", \"port\": 8080}");
+}
+
+void osHandler(Server* server, int clientConnection) {
+    char json[BUFFER_SIZE];
+
+    #ifdef _WIN32
+        snprintf(json, sizeof(json), "{\"os\": \"Windows\"}");
+    #elif defined(__linux__)
+        snprintf(json, sizeof(json), "{\"os\": \"Linux\"}");
+    #elif defined(__APPLE__)
+        snprintf(json, sizeof(json), "{\"os\": \"macOS\"}");
+    #else
+        snprintf(json, sizeof(json), "{\"os\": \"Unknown\"}");
+    #endif
+
+    send_json_response(clientConnection, json);
+}
+
+void systemInfoHandler(Server* server, int clientConnection) {
+    char json[BUFFER_SIZE];
+
+    time_t now = time(NULL);
+    struct tm* timeinfo = localtime(&now);
+    char datetime[20];
+    strftime(datetime, sizeof(datetime), "%Y-%m-%d %H:%M:%S", timeinfo);
+
+    #ifdef _WIN32
+        SYSTEM_INFO sysInfo;
+        GetSystemInfo(&sysInfo);
+        int arch = sysInfo.wProcessorArchitecture;
+        char* processorArchitecture;
+        switch (arch) {
+            case 0:
+                processorArchitecture = "x86";
+                break;
+            case 9:
+                processorArchitecture = "x64";
+                break;
+            default:
+                processorArchitecture = "Unknown";
+                break;
+        }
+
+        unsigned int numberOfLogicalProcessors = sysInfo.dwNumberOfProcessors;
+
+        DWORD bufferSize = 0;
+        GetLogicalProcessorInformationEx(RelationProcessorCore, NULL, &bufferSize);
+        if (bufferSize == 0) {
+            return;
+        }
+        PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)malloc(bufferSize);
+        if (!buffer) {
+            return;
+        }
+        GetLogicalProcessorInformationEx(RelationProcessorCore, buffer, &bufferSize);
+        unsigned int numberOfCores = 0;
+        for (DWORD i = 0; i < bufferSize; i += buffer->Size) {
+            PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX current = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)((char*)buffer + i);
+            if (current->Relationship == RelationProcessorCore) {
+                numberOfCores++;
+            }
+        }
+        free(buffer);
+
+        char escaped_processorArchitecture[256];
+        json_escape_string(processorArchitecture, escaped_processorArchitecture, sizeof(escaped_processorArchitecture));
+
+        snprintf(json, sizeof(json), "{\"os\": \"Windows\", \"arch\": \"%d\", \"processorArchitecture\": \"%s\", \"numberOfCores\": \"%u\", \"numberOfLogicalProcessors\": \"%u\", \"processorCount\": \"%u\", \"datetime\": \"%s\"}", 
+            arch, escaped_processorArchitecture, numberOfCores, numberOfLogicalProcessors, numberOfLogicalProcessors, datetime);
+    #elif defined(__linux__)
+        struct utsname uname_data;
+        uname(&uname_data);
+        unsigned int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+
+        char escaped_sysname[512], escaped_release[512], escaped_version[512], escaped_machine[512];
+        json_escape_string(uname_data.sysname, escaped_sysname, sizeof(escaped_sysname));
+        json_escape_string(uname_data.release, escaped_release, sizeof(escaped_release));
+        json_escape_string(uname_data.version, escaped_version, sizeof(escaped_version));
+        json_escape_string(uname_data.machine, escaped_machine, sizeof(escaped_machine));
+
+        snprintf(json, sizeof(json), "{\"os\": \"Linux\", \"sysname\": \"%s\", \"release\": \"%s\", \"version\": \"%s\", \"machine\": \"%s\", \"numberOfCores\": \"%u\", \"numberOfLogicalProcessors\": \"%u\", \"datetime\": \"%s\"}", 
+            escaped_sysname, escaped_release, escaped_version, escaped_machine, num_cores, num_cores, datetime);
+    #elif defined(__APPLE__)
+        struct utsname uname_data;
+        uname(&uname_data);
+        unsigned int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+
+        char escaped_sysname[512], escaped_release[512], escaped_version[512], escaped_machine[512];
+        json_escape_string(uname_data.sysname, escaped_sysname, sizeof(escaped_sysname));
+        json_escape_string(uname_data.release, escaped_release, sizeof(escaped_release));
+        json_escape_string(uname_data.version, escaped_version, sizeof(escaped_version));
+        json_escape_string(uname_data.machine, escaped_machine, sizeof(escaped_machine));
+
+        snprintf(json, sizeof(json), "{\"os\": \"macOS\", \"sysname\": \"%s\", \"release\": \"%s\", \"version\": \"%s\", \"machine\": \"%s\", \"numberOfCores\": \"%u\", \"numberOfLogicalProcessors\": \"%u\", \"datetime\": \"%s\"}", 
+            escaped_sysname, escaped_release, escaped_version, escaped_machine, num_cores, num_cores, datetime);
+    #else
+        snprintf(json, sizeof(json), "{\"os\": \"Unknown\", \"datetime\": \"%s\"}", datetime);
+    #endif
+
+    send_json_response(clientConnection, json);
+}
+
+void send_error_response(int clientConnection, int status_code, const char* status_message, const char* body) {
+    send_http_response(clientConnection, status_code, status_message, "text/plain", body, "close");
 }
 
 int handleRequest(Server* server, int clientConnection, char* request) {
     char method[10], path[256], version[10];
     if (sscanf(request, "%9s %255s %9s", method, path, version) != 3) {
-        char response[BUFFER_SIZE];
-        snprintf(response, sizeof(response), "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: 11\r\nConnection: close\r\n\r\nBad Request");
-        send(clientConnection, response, strlen(response), 0);
+        send_error_response(clientConnection, 400, "Bad Request", "Bad Request");
         return 0;
     }
 
     if (strcmp(method, "GET") != 0) {
-        char response[BUFFER_SIZE];
-        snprintf(response, sizeof(response), "HTTP/1.1 405 Method Not Allowed\r\nContent-Type: text/plain\r\nContent-Length: 18\r\nConnection: close\r\n\r\nMethod Not Allowed");
-        send(clientConnection, response, strlen(response), 0);
+        send_error_response(clientConnection, 405, "Method Not Allowed", "Method Not Allowed");
         return 0;
     }
 
@@ -142,9 +271,7 @@ int handleRequest(Server* server, int clientConnection, char* request) {
         }
     }
 
-    char response[BUFFER_SIZE];
-    snprintf(response, sizeof(response), "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 9\r\nConnection: close\r\n\r\nNot Found");
-    send(clientConnection, response, strlen(response), 0);
+    send_error_response(clientConnection, 404, "Not Found", "Not Found");
     printf("Sent 404 response\n");
     return 0;
 }
@@ -220,6 +347,8 @@ int main() {
 
     addRoute(&server, "/", rootPathHandler);
     addRoute(&server, "/api", apiHandler);
+    addRoute(&server, "/os", osHandler);
+    addRoute(&server, "/sys", systemInfoHandler);
 
     startServer(&server);
 
