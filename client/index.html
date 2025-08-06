@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OS - System Information</title>
+  <link rel="stylesheet" href="css/style.min.css">
+  <meta name="author" content="NatanR-dev">
+  <meta name="description" content="System Information">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <div class="container">
+    <div class="loading-overlay">
+      <div class="loading-spinner">
+        <svg class="loading-spinner__circle" viewBox="25 25 50 50">
+          <circle class="loading-spinner__path" cx="50" cy="50" r="20" fill="none" stroke-width="6" stroke-miterlimit="10"/>
+        </svg>
+        <p>Loading...</p>
+      </div>
+    </div>
+    <div class="window-controls">
+      <div class="window-button minimize">–</div>
+      <div class="window-button maximize">□</div>
+      <div class="window-button close">×</div>
+    </div>
+    <h1>System Information</h1>
+    <h2>Operating System</h2>
+    <div class="os-info-container">
+      <p id="os-info"></p>
+      <img
+        id="os-logo"
+        style="display: none;"
+        src="https://upload.wikimedia.org/wikipedia/commons/5/5f/Windows_logo_-_2012.svg"
+        alt="Windows Logo"
+        onerror="console.error('Failed to load Windows logo');"
+      />
+    </div>
+    <p id="error-note" class="error-note"></p>
+    <h2>Processor Information</h2>
+    <div id="system-info">
+      <div class="tabs">
+        <div class="tab active" data-tab="system">System</div>
+        <div class="tab" data-tab="performance">Performance</div>
+      </div>
+      <div id="system" class="tab-content active">
+        <table class="details-table">
+          <tbody id="details-table-body"></tbody>
+        </table>
+      </div>
+      <div id="performance" class="tab-content">
+        <div class="chart-container">
+          <canvas id="bar-chart"></canvas>
+          <canvas id="radar-chart"></canvas>
+        </div>
+        <div class="windows-experience-index-evaluation">
+          <h3>System Assessment (Windows Experience Index)</h3>
+          <table class="windows-experience-index-table">
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody id="windows-experience-index-table-body"></tbody>
+          </table>
+          <p class="windows-experience-index-note">
+            The base score is determined by the lowest score among the assessed components. The rating reflects overall system performance.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.min.js"></script>
+</body>
+</html>
