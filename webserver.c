@@ -175,15 +175,19 @@ void systemInfoHandler(Server* server, int clientConnection) {
         SYSTEM_INFO sysInfo;
         GetSystemInfo(&sysInfo);
         int arch = sysInfo.wProcessorArchitecture;
+        char* architectureName;
         char* processorArchitecture;
         switch (arch) {
             case 0:
+                architectureName = "x86";
                 processorArchitecture = "x86";
                 break;
             case 9:
+                architectureName = "AMD64";
                 processorArchitecture = "x64";
                 break;
             default:
+                architectureName = "Unknown";
                 processorArchitecture = "Unknown";
                 break;
         }
