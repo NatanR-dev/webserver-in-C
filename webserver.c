@@ -215,9 +215,12 @@ void systemInfoHandler(Server* server, int clientConnection) {
 
         char escaped_processorArchitecture[256];
         json_escape_string(processorArchitecture, escaped_processorArchitecture, sizeof(escaped_processorArchitecture));
+        
+        char escaped_architecture_name[256];
+        json_escape_string(architectureName, escaped_architecture_name, sizeof(escaped_architecture_name));
 
-        snprintf(json, sizeof(json), "{\"os\": \"Windows\", \"arch\": \"%d\", \"processorArchitecture\": \"%s\", \"numberOfCores\": \"%u\", \"numberOfLogicalProcessors\": \"%u\", \"processorCount\": \"%u\", \"datetime\": \"%s\"}", 
-            arch, escaped_processorArchitecture, numberOfCores, numberOfLogicalProcessors, numberOfLogicalProcessors, datetime);
+        snprintf(json, sizeof(json), "{\"os\": \"Windows\", \"arch\": \"%s\", \"processorArchitecture\": \"%s\", \"numberOfCores\": \"%u\", \"numberOfLogicalProcessors\": \"%u\", \"processorCount\": \"%u\", \"datetime\": \"%s\"}", 
+            escaped_architecture_name, escaped_processorArchitecture, numberOfCores, numberOfLogicalProcessors, numberOfLogicalProcessors, datetime);
     #elif defined(__linux__)
         struct utsname uname_data;
         uname(&uname_data);
