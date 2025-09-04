@@ -41,7 +41,7 @@ Routes:
 
 ## Setup
 - [Windows](#windows)
-- [Ubuntu](#ubuntu)
+- [Linux](#linux-debian-based)
 - [macOS](#macos)
 
 ## Quick Start
@@ -83,7 +83,7 @@ Stop-Job -Id <JOB_ID>
 Remove-Job -Id <JOB_ID>
 ```
 
-### Ubuntu
+### Linux (Debian-based)
 **Environment**:
 1. Install build tools:
    ```bash
@@ -133,19 +133,6 @@ make run
 
 # Clean build artifacts
 make clean
-```
-
-### Linux
-**Tips: Run in Background**:
-```bash
-# Start server in background
-./webserver &
-
-# Check running processes
-ps aux | grep webserver
-
-# To stop the server
-kill $(pgrep webserver)
 ```
 
 ---
