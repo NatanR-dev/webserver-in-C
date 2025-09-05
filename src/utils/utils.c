@@ -1,14 +1,27 @@
 #include "utils.h"
-#include <string.h>
+
+// Common
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 #ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
+    // WINDOWS
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <iphlpapi.h>
 #else
-#include <unistd.h>
-#include <sys/socket.h>
+    // UNIX-LIKE
+    #include <unistd.h>
+    #include <ifaddrs.h>
+    #include <netdb.h>
+    #include <net/if.h>
+    #include <arpa/inet.h>
+    #include <sys/socket.h>
+    #include <sys/types.h>
 #endif
 
 void jsonEscapeString(const char* input, char* output, size_t outputSize) {
@@ -99,4 +112,121 @@ void sendJsonResponse(int clientConnection, const char* json) {
 void sendErrorResponse(int clientConnection, int statusCode, 
                       const char* statusMessage, const char* body) {
     sendHttpResponse(clientConnection, statusCode, statusMessage, "text/plain", body, "close");
+}
+
+int getLocalIP(char* ip, size_t ipSize) {
+    if (ip == NULL || ipSize < 16) {  
+        return -1;
+    }
+
+#ifdef _WIN32
+    PIP_ADAPTER_ADDRESSES pAddresses = NULL;
+    ULONG outBufLen = 0;
+    DWORD dwRetVal = 0;
+    
+    dwRetVal = GetAdaptersAddresses(AF_INET, 0, NULL, NULL, &outBufLen);
+    if (dwRetVal != ERROR_BUFFER_OVERFLOW) {
+        return -1;
+    }
+    
+    pAddresses = (PIP_ADAPTER_ADDRESSES)malloc(outBufLen);
+    if (pAddresses == NULL) {
+        return -1;
+    }
+    
+    dwRetVal = GetAdaptersAddresses(AF_INET, 0, NULL, pAddresses, &outBufLen);
+    
+    if (dwRetVal == NO_ERROR) {
+        PIP_ADAPTER_ADDRESSES pCurrAddresses = pAddresses;
+        while (pCurrAddresses) {
+            if (pCurrAddresses->OperStatus == IfOperStatusUp && 
+                pCurrAddresses->IfType != IF_TYPE_SOFTWARE_LOOPBACK) {
+                    
+                PIP_ADAPTER_UNICAST_ADDRESS pUnicast = pCurrAddresses->FirstUnicastAddress;
+                while (pUnicast) {
+                    if (pUnicast->Address.lpSockaddr->sa_family == AF_INET) {
+                        struct sockaddr_in *ipv4 = (struct sockaddr_in *)pUnicast->Address.lpSockaddr;
+                        inet_ntop(AF_INET, &(ipv4->sin_addr), ip, ipSize);
+                        free(pAddresses);
+                        return 0;
+                    }
+                    pUnicast = pUnicast->Next;
+                }
+            }
+            pCurrAddresses = pCurrAddresses->Next;
+        }
+    }
+    
+    free(pAddresses);
+    return -1;
+#else
+    struct ifaddrs *ifaddr = NULL;
+    struct ifaddrs *ifa = NULL;
+    int result = -1;
+    
+    if (getifaddrs(&ifaddr) == -1) {
+        return -1;
+    }
+    
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr == NULL) {
+            continue;
+        }
+        
+        int family = ifa->ifa_addr->sa_family;
+        
+        if (family == AF_INET && 
+            !(ifa->ifa_flags & IFF_LOOPBACK) && 
+            (ifa->ifa_flags & IFF_UP) &&
+            (ifa->ifa_flags & IFF_RUNNING)) {
+                
+            struct sockaddr_in *addr = (struct sockaddr_in *)ifa->ifa_addr;
+            if (inet_ntop(AF_INET, &(addr->sin_addr), ip, ipSize) != NULL) {
+                result = 0;  
+                break;
+            }
+        }
+    }
+    
+    freeifaddrs(ifaddr);
+    return result;
+#endif
+}
+
+void generateMachineId(char* id, size_t idSize) {
+    if (id == NULL || idSize < 9) {  
+        if (id != NULL && idSize > 0) {
+            id[0] = '\0';  
+        }
+        return;
+    }
+
+    char hostname[256] = {0};
+    int hostnameResult = -1;
+    
+#ifdef _WIN32
+    DWORD size = (DWORD)sizeof(hostname);
+    hostnameResult = (GetComputerNameA(hostname, &size) == 0) ? -1 : 0;
+#else
+    hostnameResult = gethostname(hostname, sizeof(hostname) - 1);
+#endif
+    
+    if (hostnameResult != 0) {
+        strncpy(hostname, "unknown-host", sizeof(hostname) - 1);
+    }
+    hostname[sizeof(hostname) - 1] = '\0';  
+    
+    unsigned long hash = 5381;
+    int c;
+    const unsigned char* str = (const unsigned char*)hostname;
+    
+    while ((c = *str++)) {
+        hash = ((hash << 5) + hash) + c; 
+    }
+    
+    time_t now = time(NULL);
+    hash = hash ^ (unsigned long)now;
+    
+    snprintf(id, idSize, "%08lx", hash);
+    id[idSize - 1] = '\0'; 
 }

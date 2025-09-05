@@ -1,18 +1,40 @@
-#include "handlers.h"
-#include "../utils/utils.h"
+// Common
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 
+// WINDOWS
 #ifdef _WIN32
-#include <windows.h>
-#elif defined(__linux__) || defined(__APPLE__)
-#include <sys/utsname.h>
-#include <unistd.h>
+    // Windows includes
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
+    #include <winsock2.h>
+    #include <ws2tcpip.h>  
+    #include <iphlpapi.h>
+    
+    // Linking libs
+    #ifdef _MSC_VER
+        #pragma comment(lib, "ws2_32.lib")
+        #pragma comment(lib, "iphlpapi.lib")
+    #endif
+#else
+    // UNIX-LIKE
+    #include <unistd.h>
+    #include <ifaddrs.h>
+    #include <netdb.h>
+    #include <net/if.h>
+    #include <arpa/inet.h>
+    #include <sys/socket.h>
+    #include <sys/types.h>
+    #include <netinet/in.h> 
 #endif
 
+// Imports
+#include "handlers.h"
+#include "../utils/utils.h"
+
 void rootPathHandler(Server* server, int clientConnection) {
-    int size = snprintf(NULL, 0, "{\"message\": \"Welcome to API\", \"version\": \"1.0\", \"available_routes\": [");
+    int size = snprintf(NULL, 0, "{\"message\": \"Welcome to low-level C API\", \"version\": \"1.0\", \"available_routes\": [");
     for (int i = 0; i < server->routeCount; i++) {
         char escapedPath[1024];
         jsonEscapeString(server->routes[i].path, escapedPath, sizeof(escapedPath));
@@ -29,7 +51,7 @@ void rootPathHandler(Server* server, int clientConnection) {
         return;
     }
 
-    int offset = snprintf(json, size, "{\"message\": \"Welcome to API\", \"version\": \"1.0\", \"available_routes\": [");
+    int offset = snprintf(json, size, "{\"message\": \"Welcome to low-level C API\", \"version\": \"1.0\", \"available_routes\": [");
     for (int i = 0; i < server->routeCount; i++) {
         char escapedPath[1024];
         jsonEscapeString(server->routes[i].path, escapedPath, sizeof(escapedPath));
@@ -47,6 +69,33 @@ void rootPathHandler(Server* server, int clientConnection) {
 void apiHandler(Server* server, int clientConnection) {
     (void)server;  
     sendJsonResponse(clientConnection, "{\"message\": \"Hello from my API!\", \"port\": 8080}");
+}
+
+void machinesHandler(Server* server, int clientConnection) {
+    (void)server;  
+    char response[BUFFER_SIZE];
+    char machineId[33] = {0};
+    char ip[46] = "127.0.0.1";  
+    
+    generateMachineId(machineId, sizeof(machineId));
+    
+    if (getLocalIP(ip, sizeof(ip)) != 0) {
+        strncpy(ip, "127.0.0.1", sizeof(ip));
+    }
+    
+    time_t now = time(NULL);
+    struct tm *tm_info = localtime(&now);
+    char dateTime[20];
+    strftime(dateTime, sizeof(dateTime), "%Y-%m-%d %H:%M:%S", tm_info);
+    
+    snprintf(response, sizeof(response),
+             "{\"status\":\"started\",\"info\":"
+             "{\"id\":\"%s\","
+             "\"ip\":\"%s\","
+             "\"date\":\"%s\"}}",
+             machineId, ip, dateTime);
+    
+    sendJsonResponse(clientConnection, response);
 }
 
 void osHandler(Server* server, int clientConnection) {

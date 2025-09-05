@@ -1,20 +1,37 @@
-#include "server.h"
-#include "../routes/routes.h"
+// Common
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+
+// WINDOWS
 #ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#define close closesocket
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <iphlpapi.h>
+    #define close closesocket
+    
+    // Linking libs
+    #ifdef _MSC_VER
+        #pragma comment(lib, "ws2_32.lib")
+    #endif
 #else
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+    // UNIX-LIKE
+    #include <unistd.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <netdb.h>
+    #include <sys/types.h>
 #endif
 
-#include "../utils/utils.h"  
+// Imports
+#include "server.h"
+#include "../routes/routes.h"
+#include "../utils/utils.h"
 
+// Constants
 #define PORT 8080
 #define BUFFER_SIZE 4096
 
