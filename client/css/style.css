@@ -50,7 +50,7 @@ body {
   transition: max-height 0.3s ease-in-out;
 }
 .sidebar .submenu.active {
-  max-height: 200px; /* Ajustado para o número de subitens */
+  max-height: 200px; 
 }
 .sidebar .submenu li {
   font-size: 12px;
@@ -175,24 +175,75 @@ h2 {
 }
 .action-buttons {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: center;
+  flex-wrap: wrap;
+  padding: 4px 0;
 }
+
 .action-button {
-  background: #ec7211;
   color: #ffffff;
-  border: 1px solid #d5dbdb;
-  padding: 6px 12px;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
   border-radius: 3px;
   cursor: pointer;
   font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
-.action-button:hover {
+.action-button.power-button {
+  background: #ff4d4d; 
+}
+
+.action-button.power-button:hover:not(:disabled) {
+  background: #e63939;
+  box-shadow: 0 2px 4px rgba(255, 77, 77, 0.3);
+}
+.action-button.terminal-button {
+  background: #424242; 
+}
+
+.action-button.terminal-button:hover:not(:disabled) {
+  background: #2c2c2c;
+  box-shadow: 0 2px 4px rgba(66, 66, 66, 0.3);
+}
+.action-button.toggle-specs {
+  background: #ec7211; 
+}
+
+.action-button.toggle-specs:hover:not(:disabled) {
   background: #d95f0e;
+  box-shadow: 0 2px 4px rgba(236, 114, 17, 0.3);
+}
+#save-settings {
+  background: #1a73e8; 
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px 20px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#save-settings:hover:not(:disabled) {
+  background: #1557b0;
+  box-shadow: 0 2px 4px rgba(26, 115, 232, 0.3);
 }
 .action-button:disabled {
   background: #d5dbdb;
+  color: #a8b0b0;
   cursor: not-allowed;
+  opacity: 0.7;
+}
+.action-button i {
+  font-size: 10px;
 }
 .action-menu-container {
   position: relative;
@@ -248,7 +299,6 @@ h2 {
   color: #d5dbdb;
   cursor: not-allowed;
 }
-/* Status Badges */
 .status-badge {
   display: inline-block;
   padding: 4px 8px;
@@ -284,8 +334,6 @@ h2 {
   background-color: #d13212;
   color: white;
 }
-
-/* Power State Styles (for backward compatibility) */
 .power-state-running {
   color: #008296;
   font-weight: bold;
@@ -295,21 +343,95 @@ h2 {
   font-weight: bold;
 }
 .machine-specs {
-  margin-top: 5px;
+  margin: 15px 0;
+  background: #ffffff;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
+
 .details-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 13px;
+  background: #ffffff;
+  margin: 0;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
 }
-.details-table th, .details-table td {
-  padding: 8px;
-  border: 1px solid #d5dbdb;
+
+.details-table th, 
+.details-table td {
+  padding: 12px 16px;
+  line-height: 1.5;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.details-table tr:last-child td {
+  border-bottom: none;
+}
+
+.details-table td {
+  color: #2c3e50;
+  vertical-align: middle;
+  background: #ffffff;
 }
 .details-table th {
-  background: #fafafa;
-  width: 30%;
-  color: #232f3e;
+  font-weight: 600;
+  text-align: left;
+  width: 35%;
+  color: #2c3e50;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: none;
+  border-left: 4px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  transition: all 0.2s ease;
+  font-size: 0.9em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  vertical-align: middle;
+}
+.details-table tr:nth-child(1) th { border-left-color: #2c3e50; } 
+.details-table tr:nth-child(2) th { border-left-color: #3498db; } 
+.details-table tr:nth-child(3) th { border-left-color: #1abc9c; } 
+.details-table tr:nth-child(4) th { border-left-color: #f1c40f; } 
+.details-table tr:nth-child(5) th { border-left-color: #e67e22; } 
+.details-table tr:nth-child(6) th { border-left-color: #e74c3c; } 
+.details-table tr:nth-child(7) th { border-left-color: #9b59b6; } 
+.details-table tr:nth-child(8) th { border-left-color: #95a5a6; } 
+
+.details-table th:hover {
+  background-color: #f1f5f9;
+  color: #1a365d;
+}
+
+.details-table tr:not(:last-child) td {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.details-table tr:hover td {
+  background-color: #f8f9fa;
+}
+
+.details-table .status-value {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+@media (max-width: 768px) {
+  .details-table th,
+  .details-table td {
+    padding: 8px 10px;
+  }
 }
 .modal {
   display: none;

@@ -709,7 +709,17 @@ const MachineActivityApp = {
   },
 
   createTableRow(label, value, className = '') {
-    return `<tr${className ? ` class="${className}"` : ''}><th>${label}</th><td>${value}</td></tr>`;
+    // Check if this is a status row and apply badge styling
+    const isStatusRow = label.toLowerCase() === 'status';
+    const formattedValue = isStatusRow 
+      ? `<span class="status-badge status-${value.toLowerCase()}">${value}</span>` 
+      : value;
+      
+    return `
+      <tr${className ? ` class="${className}"` : ''}>
+        <th>${label}</th>
+        <td>${formattedValue}</td>
+      </tr>`;
   },
 
   setupToggleButtons(sectionPrefix) {
