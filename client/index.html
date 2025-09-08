@@ -47,11 +47,14 @@
           </svg>
           Snapshots
         </li>
-        <li class="menu-item" data-section="settings">
+        <li class="menu-item" data-toggle="settings-submenu">
           <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2">
             <path d="M9 18l6-6-6-6"/>
           </svg>
           Settings
+          <ul class="submenu" id="settings-submenu">
+            <li data-section="account">Account</li>
+          </ul>
         </li>
       </ul>
     </div>
@@ -222,36 +225,43 @@
           </table>
         </div>
       </div>
-      <div class="content-section" id="settings">
+      <div class="content-section" id="account">
         <div class="header">
-          <h1>Settings</h1>
+          <h1>Account Settings</h1>
         </div>
         <div class="card">
-          <h2>Account Settings</h2>
-          <div class="settings-form">
+          <div class="form-row">
             <div class="form-group">
-              <label for="region-select">Cloud Region</label>
-              <select id="region-select" class="form-control" required>
-                <option value="us-east-1">us-east-1 (N. Virginia)</option>
-                <option value="us-west-2">us-west-2 (Oregon)</option>
-                <option value="sa-east-1">sa-east-1 (São Paulo)</option>
-                <option value="sa-west-1">sa-west-1 (Brasília)</option>
-                <option value="eu-west-1">eu-west-1 (Ireland)</option>
-                <option value="ap-southeast-1">ap-southeast-1 (Singapore)</option>
-                <option value="ap-northeast-1">ap-northeast-1 (Tokyo)</option>
+              <label for="account-name">Account Name</label>
+              <input type="text" id="account-name" class="form-control" value="Demo User">
+            </div>
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" class="form-control" value="user@example.com">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="region">Region</label>
+              <select id="region" class="form-control">
+                <option value="sa-east-1" selected>South America (São Paulo)</option>
+                <option value="us-east-1">US East (N. Virginia)</option>
+                <option value="us-west-2">US West (Oregon)</option>
+                <option value="eu-west-1">EU (Ireland)</option>
               </select>
             </div>
             <div class="form-group">
-              <label for="mfa-enabled">Enable MFA</label>
-              <input type="checkbox" id="mfa-enabled" class="form-checkbox">
+              <label>Multi-Factor Auth</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="mfa-enabled" class="toggle-input">
+                <span class="toggle-slider"></span>
+              </div>
             </div>
-            <div class="form-group">
-              <label for="account-name">Account Name</label>
-              <input type="text" id="account-name" class="form-control" placeholder="Enter account name">
-            </div>
-            <button class="action-button" id="save-settings">Save Settings</button>
-            <p id="settings-status" class="settings-status"></p>
           </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="save-settings">Save Changes</button>
+          </div>
+          <div id="settings-status" class="settings-status"></div>
         </div>
       </div>
       <div class="modal" id="power-modal">

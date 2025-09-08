@@ -138,38 +138,66 @@ const MachineActivityApp = {
   },
 
   setupSettings() {
-    const regionSelect = document.getElementById('region-select');
-    const mfaEnabled = document.getElementById('mfa-enabled');
-    const accountName = document.getElementById('account-name');
+    const form = document.querySelector('#account .card');
     const saveButton = document.getElementById('save-settings');
     const status = document.getElementById('settings-status');
 
-    const savedRegion = localStorage.getItem('aws-region') || 'sa-east-1';
-    const savedMfa = localStorage.getItem('mfa-enabled') === 'true';
-    const savedAccountName = localStorage.getItem('account-name') || '';
+    const mockSettings = {
+      accountName: 'Lorem User',
+      email: 'user@mail.com',
+      region: 'sa-east-1',
+      mfaEnabled: false
+    };
 
-    regionSelect.value = savedRegion;
-    mfaEnabled.checked = savedMfa;
-    accountName.value = savedAccountName;
+    if (form) {
+      form.querySelector('#account-name').value = mockSettings.accountName;
+      form.querySelector('#email').value = mockSettings.email;
+      form.querySelector('#region').value = mockSettings.region;
+      form.querySelector('#mfa-enabled').checked = mockSettings.mfaEnabled;
+    }
 
-    saveButton.addEventListener('click', () => {
-      const region = regionSelect.value;
-      const mfa = mfaEnabled.checked;
-      const accountNameValue = accountName.value.trim();
+    if (saveButton) {
+      saveButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        const accountName = form.querySelector('#account-name').value.trim();
+        const email = form.querySelector('#email').value.trim();
+        const region = form.querySelector('#region').value;
+        const mfaEnabled = form.querySelector('#mfa-enabled').checked;
 
-      if (accountNameValue.length > 20) {
-        status.textContent = 'Error: Account name must be 20 characters or less';
-        status.classList.add('error');
-        return;
-      }
+        if (!accountName || !email) {
+          this.showStatusMessage('Please fill in all required fields', 'error');
+          return;
+        }
 
-      localStorage.setItem('aws-region', region);
-      localStorage.setItem('mfa-enabled', mfa);
-      localStorage.setItem('account-name', accountNameValue);
+        if (!/^\S+@\S+\.\S+$/.test(email)) {
+          this.showStatusMessage('Please enter a valid email address', 'error');
+          return;
+        }
 
-      status.textContent = 'Settings saved successfully';
-      status.classList.remove('error');
-    });
+        console.log('Saving settings:', { accountName, email, region, mfaEnabled });
+        this.showStatusMessage('Settings saved successfully!', 'success');
+      });
+    }
+
+    const accountSection = document.getElementById('account');
+    if (accountSection) {
+      accountSection.classList.remove('active');
+    }
+  },
+  
+  showStatusMessage(message, type = 'info') {
+    const status = document.getElementById('settings-status');
+    if (status) {
+      status.textContent = message;
+      status.className = 'settings-status';
+      status.classList.add(type);
+      
+      setTimeout(() => {
+        status.textContent = '';
+        status.className = 'settings-status';
+      }, 3000);
+    }
   },
 
   async loadMachineData() {
