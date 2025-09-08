@@ -246,31 +246,41 @@ const MachineActivityApp = {
 
   async fetchData() {
     try {
-      const osResponse = await fetch('http://localhost:8080/api/os');
-      const sysResponse = await fetch('http://localhost:8080/api/sys');
+      const [osResponse, sysResponse, machineResponse] = await Promise.all([
+        fetch('http://localhost:8080/api/os'),
+        fetch('http://localhost:8080/api/sys'),
+        fetch('http://localhost:8080/api/machine')
+      ]);
 
       const osStatus = osResponse.status;
       const sysStatus = sysResponse.status;
-      console.log(`OS API status: ${osStatus}, Sys API status: ${sysStatus}`);
+      const machineStatus = machineResponse.status;
+      
+      console.log(`API status - OS: ${osStatus}, Sys: ${sysStatus}, Machine: ${machineStatus}`);
 
-      if (!osResponse.ok || !sysResponse.ok) {
-        throw new Error(`API failed - OS: ${osStatus}, Sys: ${sysStatus}`);
+      if (!osResponse.ok || !sysResponse.ok || !machineResponse.ok) {
+        throw new Error(`API failed - OS: ${osStatus}, Sys: ${sysStatus}, Machine: ${machineStatus}`);
       }
 
       const osData = await osResponse.json();
       const sysData = await sysResponse.json();
+      const machineData = await machineResponse.json();
 
       const osArray = Array.isArray(osData) ? osData : [osData];
       const sysArray = Array.isArray(sysData) ? sysData : [sysData];
+      const machineArray = Array.isArray(machineData) ? machineData : [machineData];
 
       const machines = osArray.map((os, index) => {
+        const machineInfo = machineArray[index] || machineArray[0] || {};
         const machine = {
           id: index + 1,
           os: os.os || 'Unknown',
           powerState: osStatus === 200 && sysStatus === 200 ? 'running' : 'stopped',
-          lastLogin: os.lastLogin || '2025-09-04 16:53:00',
-          ip: os.ip || '192.168.1.100',
+          lastLogin: machineInfo.date || os.lastLogin || '2025-09-04 16:53:00',
+          ip: machineInfo.ip || os.ip || '192.168.1.100',
           location: os.location || 'Unknown',
+          status: machineInfo.status || 'unknown',
+          info: machineInfo.info || {},
           loginCount: os.loginCount || Math.floor(Math.random() * 10) + 1,
           arch: sysArray[index]?.arch || 'Unknown',
           processor: sysArray[index]?.processorArchitecture || 'Unknown',
@@ -280,16 +290,22 @@ const MachineActivityApp = {
           logs: [],
           snapshots: []
         };
+        
         machine.loginHistory = this.generateLoginHistory(machine.id, machine.lastLogin, machine.ip, machine.loginCount);
         machine.logs = this.generateLogs(machine.id, machine.lastLogin);
         machine.snapshots = this.generateSnapshots(machine.id, machine.lastLogin);
-        console.log(`Generated loginHistory for Machine ${machine.id}:`, machine.loginHistory);
-        console.log(`Generated logs for Machine ${machine.id}:`, machine.logs);
-        console.log(`Generated snapshots for Machine ${machine.id}:`, machine.snapshots);
+        
+        console.log(`Machine ${machine.id} data:`, {
+          ...machine,
+          loginHistory: `[${machine.loginHistory.length} items]`,
+          logs: `[${machine.logs.length} items]`,
+          snapshots: `[${machine.snapshots.length} items]`
+        });
+        
         return machine;
       });
 
-      console.log('Machines:', machines);
+      console.log('All machines data:', machines);
       return machines;
     } catch (error) {
       console.error('Fetch error:', error);
@@ -401,20 +417,25 @@ const MachineActivityApp = {
 
   renderOverview(machines) {
     const machineHTML = machines.map(machine => {
-      console.log(`Machine ${machine.id} powerState: ${machine.powerState}`);
+      const statusClass = machine.status ? `status-${machine.status.toLowerCase()}` : '';
+      const machineId = machine.info?.id || `machine-${machine.id}`;
+      const lastActive = machine.info?.date || machine.lastLogin;
+      
       return `
         <tr>
-          <td>Machine ${machine.id}</td>
+          <td>${machineId}</td>
           <td>${machine.os}</td>
-          <td class="power-state-${machine.powerState.toLowerCase()}">${machine.powerState}</td>
-          <td>${machine.lastLogin}</td>
+          <td class="status-cell">
+            <span class="status-badge ${statusClass}">${machine.status || 'unknown'}</span>
+          </td>
+          <td>${lastActive}</td>
           <td>${machine.ip}</td>
           <td>${machine.location}</td>
           <td>${machine.loginCount}</td>
           <td>
             <div class="action-buttons">
-              <button class="action-button power-button" data-machine-id="${machine.id}">Power</button>
-              <button class="action-button terminal-button" data-machine-id="${machine.id}" ${machine.powerState.toLowerCase() !== 'running' ? 'disabled' : ''}>Terminal</button>
+              <button class="action-button power-button" data-machine-id="${machine.id}" data-machine-status="${machine.status || 'unknown'}">Power</button>
+              <button class="action-button terminal-button" data-machine-id="${machine.id}" ${machine.status !== 'started' ? 'disabled' : ''}>Terminal</button>
               <button class="action-button toggle-specs" data-machine-id="${machine.id}">Show Specs</button>
             </div>
           </td>
@@ -423,10 +444,13 @@ const MachineActivityApp = {
           <td colspan="8">
             <table class="details-table">
               <tbody>
+                ${this.createTableRow('Status', machine.status || 'unknown')}
                 ${this.createTableRow('Architecture', machine.arch)}
                 ${this.createTableRow('Processor', machine.processor)}
                 ${this.createTableRow('Cores', machine.cores)}
                 ${this.createTableRow('Logical Processors', machine.logicalProcessors)}
+                ${machine.info?.id ? this.createTableRow('Machine ID', machine.info.id) : ''}
+                ${machine.info?.date ? this.createTableRow('Last Active', machine.info.date) : ''}
               </tbody>
             </table>
           </td>
@@ -478,18 +502,23 @@ const MachineActivityApp = {
 
   renderMachines(machines) {
     const machineHTML = machines.map(machine => {
-      console.log(`Machine ${machine.id} powerState: ${machine.powerState}`);
+      const statusClass = machine.status ? `status-${machine.status.toLowerCase()}` : '';
+      const machineId = machine.info?.id || `machine-${machine.id}`;
+      const lastActive = machine.info?.date || machine.lastLogin;
+      
       return `
         <tr>
-          <td>Machine ${machine.id}</td>
+          <td>${machineId}</td>
           <td>${machine.os}</td>
-          <td class="power-state-${machine.powerState.toLowerCase()}">${machine.powerState}</td>
+          <td class="status-cell">
+            <span class="status-badge ${statusClass}">${machine.status || 'unknown'}</span>
+          </td>
           <td>
             <div class="action-menu-container">
               <button class="action-menu-button" data-machine-id="${machine.id}">⋮</button>
               <div class="action-menu" id="action-menu-${machine.id}">
-                <div class="action-menu-item power-button" data-machine-id="${machine.id}">Power</div>
-                <div class="action-menu-item terminal-button" data-machine-id="${machine.id}" ${machine.powerState.toLowerCase() !== 'running' ? 'data-disabled="true"' : ''}>Terminal</div>
+                <div class="action-menu-item power-button" data-machine-id="${machine.id}" data-machine-status="${machine.status || 'unknown'}">Power</div>
+                <div class="action-menu-item terminal-button" data-machine-id="${machine.id}" ${machine.status !== 'started' ? 'data-disabled="true"' : ''}>Terminal</div>
                 <div class="action-menu-item toggle-specs" data-machine-id="${machine.id}">Show Specs</div>
               </div>
             </div>
@@ -499,6 +528,7 @@ const MachineActivityApp = {
           <td colspan="4">
             <table class="details-table">
               <tbody>
+                ${this.createTableRow('Status', machine.status || 'unknown')}
                 ${this.createTableRow('Architecture', machine.arch)}
                 ${this.createTableRow('Processor', machine.processor)}
                 ${this.createTableRow('Cores', machine.cores)}

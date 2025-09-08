@@ -248,6 +248,44 @@ h2 {
   color: #d5dbdb;
   cursor: not-allowed;
 }
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  min-width: 80px;
+  text-align: center;
+}
+
+.status-started {
+  background-color: #1d8102;
+  color: white;
+}
+
+.status-stopped {
+  background-color: #d13212;
+  color: white;
+}
+
+.status-pending {
+  background-color: #ff9900;
+  color: #232f3e;
+}
+
+.status-unknown {
+  background-color: #545b64;
+  color: white;
+}
+
+.status-error {
+  background-color: #d13212;
+  color: white;
+}
+
+/* Power State Styles (for backward compatibility) */
 .power-state-running {
   color: #008296;
   font-weight: bold;
@@ -462,9 +500,9 @@ h2 {
   font-size: 14px;
 }
 .chart-container {
-  max-width: 600px;
+  max-width: 630px;
   margin: 20px auto;
-  height: 300px;
+  height: 630px;
 }
 .error-note {
   color: #d13212;
