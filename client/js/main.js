@@ -48,6 +48,20 @@ const MachineActivityApp = {
     this.setupModals();
     this.setupCursor();
     this.setupSettings();
+    this.setupLogoutButton();
+  },
+
+  setupLogoutButton() {
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        console.log('Logout clicked');
+
+        alert('Logout successful!');
+      });
+    }
   },
 
   setupSidebar() {
