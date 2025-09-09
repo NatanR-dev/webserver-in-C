@@ -1,7 +1,38 @@
+:root {
+  --color-primary: #ec7211;
+  --color-primary-light: #f8a145;
+  --color-primary-dark: #c45f0e;
+  
+  --color-bg-body: #f4f6f7;
+  --color-bg-sidebar: #252f3e;
+  --color-bg-card: #ffffff;
+  --color-bg-hover: rgba(255, 255, 255, 0.1);
+  
+  --color-text-primary: #16191f;
+  --color-text-secondary: #4a5568;
+  --color-text-light: #e2e8f0;
+  --color-text-white: #ffffff;
+  
+  --color-success: #38a169;
+  --color-warning: #d69e2e;
+  --color-error: #e53e3e;
+  --color-info: #3182ce;
+  
+  --color-border: #d5dbdb;
+  --color-divider: #3a4656;
+  
+  --color-hover-primary: #1f2a44;
+  --color-hover-light: rgba(255, 255, 255, 0.05);
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
 body {
   font-family: 'Amazon Ember', Helvetica, Arial, sans-serif;
-  background-color: #f4f6f7;
-  color: #16191f;
+  background-color: var(--color-bg-body);
+  color: var(--color-text-primary);
   margin: 0;
 }
 .container {
@@ -15,8 +46,8 @@ body {
 }
 .sidebar {
   width: 240px;
-  background: #252f3e;
-  color: #ffffff;
+  background: var(--color-bg-sidebar);
+  color: var(--color-text-white);
   padding: 20px;
   overflow-y: auto;
   position: fixed;
@@ -24,15 +55,15 @@ body {
   left: 0;
   top: 0;
   z-index: 1000;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-md);
 }
 .sidebar h2 {
   font-size: 25px;
   margin: 0 0 14px;
-  color: #ec7211;
+  color: var(--color-primary);
   font-weight: bold;
   padding-bottom: 10px;
-  border-bottom: 1px solid #3a4656;
+  border-bottom: 1px solid var(--color-divider);
 }
 .sidebar ul {
   list-style: none;
@@ -49,15 +80,15 @@ body {
   padding: 10px;
 }
 .sidebar li.menu-item:hover {
-  background: #1f2a44;
+  background: var(--color-hover-primary);
 }
 .sidebar > ul > li.menu-item.active {
-  background: #ec7211;
-  color: #ffffff;
+  background: var(--color-primary);
+  color: var(--color-text-white);
 }
 .sidebar .submenu li.active {
-  background: #ec7211;
-  color: #ffffff;
+  background: var(--color-primary);
+  color: var(--color-text-white);
 }
 .sidebar li.menu-item.active:has(.submenu.active) {
   background: transparent;
@@ -74,7 +105,7 @@ body {
 .sidebar .submenu li {
   padding: 8px 15px 8px 35px;
   font-size: 13px;
-  color: #e2e8f0;
+  color: var(--color-text-light);
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
@@ -82,8 +113,8 @@ body {
   margin: 2px 0;
 }
 .sidebar .submenu li:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background-color: var(--color-bg-hover);
+  color: var(--color-text-white);
 }
 .sidebar .menu-item .toggle-icon {
   display: inline-block;
@@ -167,12 +198,11 @@ body {
 .main-content {
   width: 100%;
   padding: 15px 20px;
-  background-color: #f4f6f7;
+  background-color: var(--color-bg-body);
   min-height: calc(100vh - 30px);
   box-sizing: border-box;
   border-radius: 8px;
-  /*box-shadow: 0 2px 4px rgba(0,0,0,0.1);*/
-  margin: 0 0;
+  margin: 10px 0;
 }
 .content-section {
   display: none;
@@ -181,13 +211,13 @@ body {
   display: block;
 }
 .header {
-  background: #252f3e;
-  color: #ffffff;
+  background: var(--color-bg-sidebar);
+  color: var(--color-text-white);
   padding: 10px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 .header h1 {
   font-size: 20px;
@@ -224,50 +254,143 @@ body {
   100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; }
 }
 .card {
-  background: #ffffff;
-  border: 1px solid #d5dbdb;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   padding: 20px;
   margin-bottom: 20px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 h2 {
   font-size: 18px;
-  color: #16191f;
+  color: var(--color-text-primary);
   margin: 0 0 15px;
 }
-.machine-table, .specs-table, .system-table, .activity-table, .logs-table, .snapshots-table {
+/* Base table styles */
+.machine-table,
+.specs-table,
+.system-table,
+.activity-table,
+.logs-table,
+.snapshots-table {
   width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-bottom: 20px;
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Reset table layout */
+table {
   border-collapse: collapse;
-  font-size: 14px;
+  width: 100%;
 }
-.machine-table th, .machine-table td,
-.specs-table th, .specs-table td,
-.system-table th, .system-table td,
-.activity-table th, .activity-table td,
-.logs-table th, .logs-table td,
-.snapshots-table th, .snapshots-table td {
-  padding: 12px;
-  border: 1px solid #d5dbdb;
-  text-align: left;
-}
+
+/* Table header styles */
 .machine-table th,
 .specs-table th,
 .system-table th,
 .activity-table th,
 .logs-table th,
 .snapshots-table th {
-  background: #fafafa;
-  font-weight: bold;
-  color: #232f3e;
+  background-color: var(--color-bg-body);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  text-align: left;
+  padding: 12px 15px;
+  border: 1px solid var(--color-border);
+  border-bottom: 2px solid var(--color-border);
 }
-.machine-table tr:hover,
-.specs-table tr:hover,
-.system-table tr:hover,
-.activity-table tr:hover,
-.logs-table tr:hover,
-.snapshots-table tr:hover {
-  background: #f0f2f4;
+
+/* Table cell styles */
+.machine-table td,
+.specs-table td,
+.system-table td,
+.activity-table td,
+.logs-table td,
+.snapshots-table td {
+  padding: 12px 15px;
+  border: 1px solid var(--color-border);
+  vertical-align: middle;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-card);
+}
+
+/* First and last child cells */
+.machine-table td:first-child,
+.specs-table td:first-child,
+.system-table td:first-child,
+.activity-table td:first-child,
+.logs-table td:first-child,
+.snapshots-table td:first-child {
+  border-left: none;
+}
+
+.machine-table td:last-child,
+.specs-table td:last-child,
+.system-table td:last-child,
+.activity-table td:last-child,
+.logs-table td:last-child,
+.snapshots-table td:last-child {
+  border-right: none;
+}
+
+/* Remove double borders */
+.machine-table,
+.specs-table,
+.system-table,
+.activity-table,
+.logs-table,
+.snapshots-table {
+  border: 1px solid var(--color-border);
+}
+
+/* Ensure tables take full width of their container */
+.content-section {
+  width: 100%;
+  overflow-x: auto;
+}
+/* Hover effect for table rows */
+.machine-table tbody tr:hover td,
+.specs-table tbody tr:hover td,
+.system-table tbody tr:hover td,
+.activity-table tbody tr:hover td,
+.logs-table tbody tr:hover td,
+.snapshots-table tbody tr:hover td {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Fix for first and last rows */
+.machine-table tr:first-child th,
+.specs-table tr:first-child th,
+.system-table tr:first-child th,
+.activity-table tr:first-child th,
+.logs-table tr:first-child th,
+.snapshots-table tr:first-child th {
+  border-top: none;
+}
+
+.machine-table tr:last-child td,
+.specs-table tr:last-child td,
+.system-table tr:last-child td,
+.activity-table tr:last-child td,
+.logs-table tr:last-child td,
+.snapshots-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Ensure table cells maintain consistent height */
+.machine-table td,
+.specs-table td,
+.system-table td,
+.activity-table td,
+.logs-table td,
+.snapshots-table td {
+  min-height: 48px; /* Minimum height for better touch targets */
+  box-sizing: border-box;
 }
 .machine-table td:nth-child(3),
 .machine-table td:last-child {
@@ -386,60 +509,66 @@ h2 {
   display: block;
 }
 .action-menu-item {
+  display: flex;
+  align-items: center;
   padding: 8px 12px;
-  font-size: 12px;
-  color: #16191f;
+  font-size: 13px;
+  color: var(--color-text-primary);
   cursor: pointer;
-  text-align: left;
+  transition: background-color 0.2s;
 }
+
 .action-menu-item:hover {
-  background: #f0f2f4;
+  background: var(--color-bg-body);
 }
+
 .action-menu-item[data-disabled="true"] {
-  color: #d5dbdb;
+  color: var(--color-border);
   cursor: not-allowed;
 }
 .status-badge {
   display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
   font-size: 12px;
-  font-weight: 600;
-  text-transform: capitalize;
-  min-width: 80px;
-  text-align: center;
+  font-weight: 500;
 }
 
-.status-started {
-  background-color: #1d8102;
-  color: white;
+.status-online {
+  background-color: rgba(56, 161, 105, 0.15);
+  color: var(--color-success);
+}
+
+.status-offline {
+  background-color: rgba(229, 62, 62, 0.15);
+  color: var(--color-error);
 }
 
 .status-stopped {
-  background-color: #d13212;
-  color: white;
+  background-color: var(--color-error);
+  color: var(--color-text-white);
 }
 
 .status-pending {
-  background-color: #ff9900;
-  color: #232f3e;
+  background-color: var(--color-warning);
+  color: var(--color-text-primary);
 }
 
 .status-unknown {
-  background-color: #545b64;
-  color: white;
+  background-color: var(--color-text-secondary);
+  color: var(--color-text-white);
 }
 
 .status-error {
-  background-color: #d13212;
-  color: white;
+  background-color: var(--color-error);
+  color: var(--color-text-white);
 }
 .power-state-running {
-  color: #008296;
+  color: var(--color-info);
   font-weight: bold;
 }
 .power-state-stopped {
-  color: #d13212;
+  color: var(--color-error);
   font-weight: bold;
 }
 .machine-specs {
@@ -540,18 +669,19 @@ h2 {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.5);
   z-index: 1000;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 }
 .modal-content {
-  background: #ffffff;
-  border-radius: 4px;
+  background: var(--color-bg-card);
   padding: 20px;
-  width: 400px;
-  max-width: 90%;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: var(--shadow-lg);
+  color: var(--color-text-primary);
 }
 .modal-content h3 {
   margin: 0 0 15px;
