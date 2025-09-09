@@ -51,9 +51,17 @@ body {
 .sidebar li.menu-item:hover {
   background: #1f2a44;
 }
-.sidebar li.active {
+.sidebar > ul > li.menu-item.active {
   background: #ec7211;
   color: #ffffff;
+}
+.sidebar .submenu li.active {
+  background: #ec7211;
+  color: #ffffff;
+}
+.sidebar li.menu-item.active:has(.submenu.active) {
+  background: transparent;
+  color: inherit;
 }
 .sidebar .submenu {
   max-height: 0;
@@ -64,11 +72,18 @@ body {
   max-height: 200px; 
 }
 .sidebar .submenu li {
-  font-size: 12px;
-  padding: 8px 10px 8px 20px;
+  padding: 8px 15px 8px 35px;
+  font-size: 13px;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  border-radius: 4px;
+  margin: 2px 0;
 }
 .sidebar .submenu li:hover {
-  background: #1f2a44;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 .sidebar .menu-item .toggle-icon {
   display: inline-block;
@@ -822,8 +837,6 @@ h2 {
   border-color: #4fd1c5;
   box-shadow: 0 0 0 1px rgba(79, 209, 197, 0.5);
 }
-
-/* Toggle Switch */
 .toggle-switch {
   position: relative;
   display: inline-block;
@@ -899,8 +912,6 @@ h2 {
 .btn-primary:hover {
   background-color: #38b2ac;
 }
-
-/* Settings Status */
 .settings-status {
   margin-top: 15px;
   padding: 10px 15px;
@@ -927,18 +938,6 @@ h2 {
   background-color: #fff5f5;
   color: #e53e3e;
   border: 1px solid #fed7d7;
-}
-#settings-submenu li {
-  padding: 8px 15px 8px 35px;
-  font-size: 13px;
-  color: #e2e8f0;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-#settings-submenu li:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
 }
 .logs-filter, .snapshots-filter {
   margin-bottom: 15px;
@@ -987,8 +986,8 @@ h2 {
     padding: 8px;
   }
   .sidebar .submenu li {
-    font-size: 11px;
-    padding: 6px 10px 6px 15px;
+    font-size: 12px;
+    padding: 8px 15px 8px 25px;
   }
   .main-content {
     padding: 10px;
