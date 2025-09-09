@@ -1,16 +1,56 @@
-const MachineActivityApp = {
+const App = {
   elements: {
+
+    settings: {
+      form: document.querySelector('#account .card'),
+      saveButton: document.getElementById('save-settings'),
+      status: document.getElementById('settings-status')
+    },
+    
+    overview: {
+      container: document.getElementById('overview'),
+      machinesList: document.getElementById('overview-machines'),
+      activityChart: document.getElementById('overview-activity-chart'),
+      machines: document.getElementById('overview-machines')
+    },
+    
     overviewMachines: document.getElementById('overview-machines'),
-    machinesList: document.getElementById('machines-list'),
-    specsList: document.getElementById('specs-list'),
-    systemList: document.getElementById('system-list'),
-    activityList: document.getElementById('activity-list'),
-    logsList: document.getElementById('logs-list'),
-    snapshotsList: document.getElementById('snapshots-list'),
-    loginTimeline: document.getElementById('login-timeline'),
-    timelineFilter: document.getElementById('timeline-filter'),
-    logsFilter: document.getElementById('logs-filter'),
-    snapshotsFilter: document.getElementById('snapshots-filter'),
+
+    machines: {
+      container: document.getElementById('machines'),
+      list: document.getElementById('machines-list'),
+      specs: {
+        container: document.getElementById('specs'),
+        list: document.getElementById('specs-list')
+      },
+      system: {
+        container: document.getElementById('system'),
+        list: document.getElementById('system-list')
+      }
+    },
+    
+    activity: {
+      container: document.getElementById('activity'),
+      list: document.getElementById('activity-list'),
+      timeline: {
+        container: document.getElementById('login-timeline'),
+        filter: document.getElementById('timeline-filter')
+      }
+    },
+    
+    logs: {
+      container: document.getElementById('logs'),
+      list: document.getElementById('logs-list'),
+      filter: document.getElementById('logs-filter')
+    },
+    
+    snapshots: {
+      container: document.getElementById('snapshots'),
+      list: document.getElementById('snapshots-list'),
+      filter: document.getElementById('snapshots-filter')
+    },
+    
+    // COMMON
     errorNote: document.getElementById('error-note'),
     loadingOverlay: document.querySelector('.loading-overlay'),
     overviewActivityChart: document.getElementById('overview-activity-chart'),
@@ -43,12 +83,17 @@ const MachineActivityApp = {
   machinesData: [],
 
   initialize() {
+    console.log('Initializing application...');
+    
     this.setupSidebar();
-    this.loadMachineData();
-    this.setupModals();
+    this.setupLogoutButton();
     this.setupCursor();
     this.setupSettings();
-    this.setupLogoutButton();
+    this.setupModals();
+    
+    setTimeout(() => {
+      this.loadMachineData();
+    }, 100);
   },
 
   setupLogoutButton() {
@@ -582,7 +627,7 @@ const MachineActivityApp = {
       `;
     }).join('');
 
-    this.elements.machinesList.innerHTML = machineHTML;
+    this.elements.machines.list.innerHTML = machineHTML;
     this.setupActionButtons();
     this.setupToggleButtons('machines');
     this.setupActionMenus();
@@ -599,7 +644,7 @@ const MachineActivityApp = {
       </tr>
     `).join('');
 
-    this.elements.specsList.innerHTML = specsHTML;
+    this.elements.machines.specs.list.innerHTML = specsHTML;
   },
 
   renderSystem(machines) {
@@ -610,7 +655,7 @@ const MachineActivityApp = {
       </tr>
     `).join('');
 
-    this.elements.systemList.innerHTML = systemHTML;
+    this.elements.machines.system.list.innerHTML = systemHTML;
   },
 
   renderActivity(machines) {
@@ -623,16 +668,16 @@ const MachineActivityApp = {
       </tr>
     `).join('');
 
-    this.elements.activityList.innerHTML = activityHTML;
+    this.elements.activity.list.innerHTML = activityHTML;
 
     const filterHTML = `
       <option value="all">All Machines</option>
       ${machines.map(machine => `<option value="${machine.id}">Machine ${machine.id}</option>`).join('')}
     `;
-    this.elements.timelineFilter.innerHTML = filterHTML;
+    this.elements.activity.timeline.filter.innerHTML = filterHTML;
 
-    this.elements.timelineFilter.addEventListener('change', () => {
-      console.log(`Timeline filter changed to: ${this.elements.timelineFilter.value}`);
+    this.elements.activity.timeline.filter.addEventListener('change', () => {
+      console.log(`Timeline filter changed to: ${this.elements.activity.timeline.filter.value}`);
       this.renderTimeline(machines);
     });
 
@@ -640,7 +685,7 @@ const MachineActivityApp = {
   },
 
   renderTimeline(machines) {
-    const filterValue = this.elements.timelineFilter.value;
+    const filterValue = this.elements.activity.timeline.filter.value;
     console.log(`Rendering timeline with filter: ${filterValue}`);
     const filteredHistory = filterValue === 'all'
       ? machines.flatMap(machine => machine.loginHistory)
@@ -649,7 +694,7 @@ const MachineActivityApp = {
     console.log('Filtered login history:', filteredHistory);
 
     if (filteredHistory.length === 0) {
-      this.elements.loginTimeline.innerHTML = '<div class="timeline-empty">No login events found</div>';
+      this.elements.activity.timeline.container.innerHTML = '<div class="timeline-empty">No login events found</div>';
       return;
     }
 
@@ -667,7 +712,7 @@ const MachineActivityApp = {
       </div>
     `).join('');
 
-    this.elements.loginTimeline.innerHTML = timelineHTML;
+    this.elements.activity.timeline.container.innerHTML = timelineHTML;
   },
 
   renderLogs(machines) {
@@ -675,14 +720,14 @@ const MachineActivityApp = {
       <option value="all">All Machines</option>
       ${machines.map(machine => `<option value="${machine.id}">Machine ${machine.id}</option>`).join('')}
     `;
-    this.elements.logsFilter.innerHTML = filterHTML;
+    this.elements.logs.filter.innerHTML = filterHTML;
 
-    this.elements.logsFilter.addEventListener('change', () => {
-      console.log(`Logs filter changed to: ${this.elements.logsFilter.value}`);
+    this.elements.logs.filter.addEventListener('change', () => {
+      console.log(`Logs filter changed to: ${this.elements.logs.filter.value}`);
       this.renderLogs(machines);
     });
 
-    const filterValue = this.elements.logsFilter.value;
+    const filterValue = this.elements.logs.filter.value;
     console.log(`Rendering logs with filter: ${filterValue}`);
     const filteredLogs = filterValue === 'all'
       ? machines.flatMap(machine => machine.logs)
@@ -703,7 +748,7 @@ const MachineActivityApp = {
       </tr>
     `;
 
-    this.elements.logsList.innerHTML = logsHTML;
+    this.elements.logs.list.innerHTML = logsHTML;
   },
 
   renderSnapshots(machines) {
@@ -711,14 +756,14 @@ const MachineActivityApp = {
       <option value="all">All Machines</option>
       ${machines.map(machine => `<option value="${machine.id}">Machine ${machine.id}</option>`).join('')}
     `;
-    this.elements.snapshotsFilter.innerHTML = filterHTML;
+    this.elements.snapshots.filter.innerHTML = filterHTML;
 
-    this.elements.snapshotsFilter.addEventListener('change', () => {
-      console.log(`Snapshots filter changed to: ${this.elements.snapshotsFilter.value}`);
+    this.elements.snapshots.filter.addEventListener('change', () => {
+      console.log(`Snapshots filter changed to: ${this.elements.snapshots.filter.value}`);
       this.renderSnapshots(machines);
     });
 
-    const filterValue = this.elements.snapshotsFilter.value;
+    const filterValue = this.elements.snapshots.filter.value;
     console.log(`Rendering snapshots with filter: ${filterValue}`);
     const filteredSnapshots = filterValue === 'all'
       ? machines.flatMap(machine => machine.snapshots)
@@ -732,7 +777,9 @@ const MachineActivityApp = {
         <td>${snapshot.snapshotId}</td>
         <td>${snapshot.creationTime}</td>
         <td>${snapshot.size}</td>
-        <td>${snapshot.status}</td>
+        <td class="status-cell">
+          <span class="status-badge status-${snapshot.status.toLowerCase()}">${snapshot.status}</span>
+        </td>
         <td>
           <div class="action-buttons">
             <button class="action-button restore" data-snapshot-id="${snapshot.snapshotId}" ${snapshot.status !== 'completed' ? 'disabled' : ''}>Restore</button>
@@ -746,12 +793,11 @@ const MachineActivityApp = {
       </tr>
     `;
 
-    this.elements.snapshotsList.innerHTML = snapshotsHTML;
+    this.elements.snapshots.list.innerHTML = snapshotsHTML;
     this.setupSnapshotButtons();
   },
 
   createTableRow(label, value, className = '') {
-    // Check if this is a status row and apply badge styling
     const isStatusRow = label.toLowerCase() === 'status';
     const formattedValue = isStatusRow 
       ? `<span class="status-badge status-${value.toLowerCase()}">${value}</span>` 
@@ -961,4 +1007,4 @@ const MachineActivityApp = {
   }
 };
 
-MachineActivityApp.initialize();
+App.initialize();

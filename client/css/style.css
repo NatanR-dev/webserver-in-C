@@ -266,7 +266,6 @@ h2 {
   color: var(--color-text-primary);
   margin: 0 0 15px;
 }
-/* Base table styles */
 .machine-table,
 .specs-table,
 .system-table,
@@ -282,14 +281,10 @@ h2 {
   border-radius: 4px;
   overflow: hidden;
 }
-
-/* Reset table layout */
 table {
   border-collapse: collapse;
   width: 100%;
 }
-
-/* Table header styles */
 .machine-table th,
 .specs-table th,
 .system-table th,
@@ -304,8 +299,6 @@ table {
   border: 1px solid var(--color-border);
   border-bottom: 2px solid var(--color-border);
 }
-
-/* Table cell styles */
 .machine-table td,
 .specs-table td,
 .system-table td,
@@ -318,8 +311,6 @@ table {
   color: var(--color-text-primary);
   background-color: var(--color-bg-card);
 }
-
-/* First and last child cells */
 .machine-table td:first-child,
 .specs-table td:first-child,
 .system-table td:first-child,
@@ -337,8 +328,6 @@ table {
 .snapshots-table td:last-child {
   border-right: none;
 }
-
-/* Remove double borders */
 .machine-table,
 .specs-table,
 .system-table,
@@ -347,13 +336,10 @@ table {
 .snapshots-table {
   border: 1px solid var(--color-border);
 }
-
-/* Ensure tables take full width of their container */
 .content-section {
   width: 100%;
   overflow-x: auto;
 }
-/* Hover effect for table rows */
 .machine-table tbody tr:hover td,
 .specs-table tbody tr:hover td,
 .system-table tbody tr:hover td,
@@ -362,8 +348,6 @@ table {
 .snapshots-table tbody tr:hover td {
   background-color: rgba(0, 0, 0, 0.02);
 }
-
-/* Fix for first and last rows */
 .machine-table tr:first-child th,
 .specs-table tr:first-child th,
 .system-table tr:first-child th,
@@ -381,15 +365,13 @@ table {
 .snapshots-table tr:last-child td {
   border-bottom: none;
 }
-
-/* Ensure table cells maintain consistent height */
 .machine-table td,
 .specs-table td,
 .system-table td,
 .activity-table td,
 .logs-table td,
 .snapshots-table td {
-  min-height: 48px; /* Minimum height for better touch targets */
+  min-height: 48px; 
   box-sizing: border-box;
 }
 .machine-table td:nth-child(3),
@@ -471,6 +453,7 @@ table {
 .action-menu-container {
   position: relative;
   display: inline-block;
+  z-index: 2000;
 }
 .action-menu-button {
   background: #ec7211;
@@ -495,18 +478,20 @@ table {
 }
 .action-menu {
   display: none;
-  position: absolute;
-  top: 100%;
-  right: 0;
+  position: fixed;
+  top: auto;
+  right: auto;
   background: #ffffff;
   border: 1px solid #d5dbdb;
   border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 100;
-  min-width: 120px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 2001;
+  min-width: 160px;
 }
 .action-menu.active {
   display: block;
+  position: fixed;
+  z-index: 2001;
 }
 .action-menu-item {
   display: flex;
@@ -529,7 +514,7 @@ table {
 .status-badge {
   display: inline-block;
   padding: 3px 8px;
-  border-radius: 12px;
+  border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
 }
@@ -549,9 +534,20 @@ table {
   color: var(--color-text-white);
 }
 
+.status-started,
+.status-completed {
+  background-color: var(--color-success);
+  color: var(--color-text-white);
+}
+
 .status-pending {
   background-color: var(--color-warning);
-  color: var(--color-text-primary);
+  color: var(--color-text-white);
+}
+
+.status-failed {
+  background-color: var(--color-error);
+  color: var(--color-text-white);
 }
 
 .status-unknown {
@@ -563,6 +559,11 @@ table {
   background-color: var(--color-error);
   color: var(--color-text-white);
 }
+.status-cell {
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
 .power-state-running {
   color: var(--color-info);
   font-weight: bold;
@@ -625,13 +626,13 @@ table {
   position: relative;
   vertical-align: middle;
 }
-.details-table tr:nth-child(1) th { border-left-color: #2c3e50; } 
-.details-table tr:nth-child(2) th { border-left-color: #3498db; } 
-.details-table tr:nth-child(3) th { border-left-color: #1abc9c; } 
+.details-table tr:nth-child(1) th { border-left-color: #1abc9c; } 
+.details-table tr:nth-child(2) th { border-left-color: #2c3e50; } 
+.details-table tr:nth-child(3) th { border-left-color: #e67e22; } 
 .details-table tr:nth-child(4) th { border-left-color: #f1c40f; } 
-.details-table tr:nth-child(5) th { border-left-color: #e67e22; } 
-.details-table tr:nth-child(6) th { border-left-color: #e74c3c; } 
-.details-table tr:nth-child(7) th { border-left-color: #9b59b6; } 
+.details-table tr:nth-child(5) th { border-left-color: #9b59b6; } 
+.details-table tr:nth-child(6) th { border-left-color: #491e1ebb; } 
+.details-table tr:nth-child(7) th { border-left-color: #3498db; } 
 .details-table tr:nth-child(8) th { border-left-color: #95a5a6; } 
 
 .details-table th:hover {
@@ -1012,8 +1013,6 @@ table {
 .toggle-input:checked + .toggle-slider:before {
   transform: translateX(18px);
 }
-
-/* Form Actions */
 .form-actions {
   margin-top: 20px;
   padding-top: 20px;
