@@ -50,29 +50,47 @@ const App = {
       filter: document.getElementById('snapshots-filter')
     },
     
-    // COMMON
-    errorNote: document.getElementById('error-note'),
-    loadingOverlay: document.querySelector('.loading-overlay'),
-    overviewActivityChart: document.getElementById('overview-activity-chart'),
-    powerModal: document.getElementById('power-modal'),
-    modalTitle: document.getElementById('modal-title'),
-    modalBoot: document.getElementById('modal-boot'),
-    modalReboot: document.getElementById('modal-reboot'),
-    modalShutdown: document.getElementById('modal-shutdown'),
-    modalStatus: document.getElementById('modal-status'),
-    modalClose: document.getElementById('modal-close'),
-    terminalModal: document.getElementById('terminal-modal'),
-    terminalTitle: document.getElementById('terminal-title'),
-    terminalOutput: document.getElementById('terminal-output'),
-    terminalInput: document.getElementById('terminal-input'),
-    terminalMinimize: document.querySelector('.terminal-control.minimize'),
-    terminalMaximize: document.querySelector('.terminal-control.maximize'),
-    terminalClose: document.querySelector('.terminal-control.close'),
-    terminalCursor: document.querySelector('.terminal-cursor'),
-    sidebarItems: document.querySelectorAll('.sidebar .menu-item'),
-    sidebarSubItems: document.querySelectorAll('.sidebar .submenu li'),
-    contentSections: document.querySelectorAll('.content-section'),
-    mainContent: document.querySelector('.main-content')
+    sharedElements: {
+
+      machineState: {
+        errorNote: document.getElementById('error-note'),
+        loadingOverlay: document.querySelector('.loading-overlay'),
+        overviewActivityChart: document.getElementById('overview-activity-chart')
+      },
+      
+      modal: {
+
+        power: {
+          container: document.getElementById('power-modal'),
+          title: document.getElementById('modal-title'),
+          boot: document.getElementById('modal-boot'),
+          reboot: document.getElementById('modal-reboot'),
+          shutdown: document.getElementById('modal-shutdown'),
+          status: document.getElementById('modal-status'),
+          close: document.getElementById('modal-close')
+        },
+        
+        terminal: {
+          container: document.getElementById('terminal-modal'),
+          title: document.getElementById('terminal-title'),
+          output: document.getElementById('terminal-output'),
+          input: document.getElementById('terminal-input'),
+          minimize: document.querySelector('.terminal-control.minimize'),
+          maximize: document.querySelector('.terminal-control.maximize'),
+          close: document.querySelector('.terminal-control.close'),
+          cursor: document.querySelector('.terminal-cursor')
+        }
+      },
+      
+      layout: {
+        sidebar: {
+          items: document.querySelectorAll('.sidebar .menu-item'),
+          subItems: document.querySelectorAll('.sidebar .submenu li')
+        },
+        contentSections: document.querySelectorAll('.content-section'),
+        mainContent: document.querySelector('.main-content')
+      }
+    }
   },
 
   currentMachineId: null,
@@ -110,7 +128,7 @@ const App = {
   },
 
   setupSidebar() {
-    this.elements.sidebarItems.forEach(item => {
+    this.elements.sharedElements.layout.sidebar.items.forEach(item => {
       item.addEventListener('click', (e) => {
         const sectionId = item.dataset.section;
         const toggleId = item.dataset.toggle;
@@ -132,10 +150,10 @@ const App = {
           }
         } else if (sectionId) {
           
-          this.elements.sidebarItems.forEach(i => i.classList.remove('active'));
-          this.elements.sidebarSubItems.forEach(i => i.classList.remove('active'));
+          this.elements.sharedElements.layout.sidebar.items.forEach(i => i.classList.remove('active'));
+          this.elements.sharedElements.layout.sidebar.subItems.forEach(i => i.classList.remove('active'));
           item.classList.add('active');
-          this.elements.contentSections.forEach(section => section.classList.remove('active'));
+          this.elements.sharedElements.layout.contentSections.forEach(section => section.classList.remove('active'));
           document.getElementById(sectionId).classList.add('active');
           console.log(`Navigated to section: ${sectionId}`);
           this.handleSectionNavigation(sectionId);
@@ -143,16 +161,16 @@ const App = {
       });
     });
 
-    this.elements.sidebarSubItems.forEach(subItem => {
+    this.elements.sharedElements.layout.sidebar.subItems.forEach(subItem => {
       subItem.addEventListener('click', (e) => {
         e.stopPropagation();
         const sectionId = subItem.dataset.section;
-        this.elements.sidebarItems.forEach(i => i.classList.remove('active'));
-        this.elements.sidebarSubItems.forEach(i => i.classList.remove('active'));
+        this.elements.sharedElements.layout.sidebar.items.forEach(i => i.classList.remove('active'));
+        this.elements.sharedElements.layout.sidebar.subItems.forEach(i => i.classList.remove('active'));
         subItem.classList.add('active');
         subItem.parentElement.classList.add('active');
         subItem.parentElement.parentElement.classList.add('active');
-        this.elements.contentSections.forEach(section => section.classList.remove('active'));
+        this.elements.sharedElements.layout.contentSections.forEach(section => section.classList.remove('active'));
         document.getElementById(sectionId).classList.add('active');
         console.log(`Navigated to subsection: ${sectionId}`);
         this.handleSectionNavigation(sectionId);
@@ -171,8 +189,8 @@ const App = {
   },
 
   setupCursor() {
-    const input = this.elements.terminalInput;
-    const cursor = this.elements.terminalCursor;
+    const input = this.elements.sharedElements.modal.terminal.input;
+    const cursor = this.elements.sharedElements.modal.terminal.cursor;
     const container = document.querySelector('.terminal-input-container');
     const prompt = document.querySelector('.terminal-prompt');
 
@@ -289,46 +307,46 @@ const App = {
       document.body.style.overflow = 'auto';
     };
 
-    this.elements.modalClose.addEventListener('click', () => {
-      closeModal(this.elements.powerModal);
+    this.elements.sharedElements.modal.power.close.addEventListener('click', () => {
+      closeModal(this.elements.sharedElements.modal.power.container);
     });
 
-    this.elements.terminalClose.addEventListener('click', () => {
-      closeModal(this.elements.terminalModal);
+    this.elements.sharedElements.modal.terminal.close.addEventListener('click', () => {
+      closeModal(this.elements.sharedElements.modal.terminal.container);
     });
 
-    this.elements.terminalMinimize.addEventListener('click', () => {
-      if (this.elements.terminalModal.classList.contains('minimized')) {
-        this.elements.terminalModal.classList.remove('minimized');
+    this.elements.sharedElements.modal.terminal.minimize.addEventListener('click', () => {
+      if (this.elements.sharedElements.modal.terminal.container.classList.contains('minimized')) {
+        this.elements.sharedElements.modal.terminal.container.classList.remove('minimized');
       } else {
-        this.elements.terminalModal.classList.add('minimized');
+        this.elements.sharedElements.modal.terminal.container.classList.add('minimized');
       }
     });
 
-    this.elements.terminalMaximize.addEventListener('click', () => {
-      if (this.elements.terminalModal.classList.contains('maximized')) {
-        this.elements.terminalModal.classList.remove('maximized');
-        this.elements.terminalModal.style.width = '600px';
-        this.elements.terminalModal.style.height = 'auto';
+    this.elements.sharedElements.modal.terminal.maximize.addEventListener('click', () => {
+      if (this.elements.sharedElements.modal.terminal.container.classList.contains('maximized')) {
+        this.elements.sharedElements.modal.terminal.container.classList.remove('maximized');
+        this.elements.sharedElements.modal.terminal.container.style.width = '600px';
+        this.elements.sharedElements.modal.terminal.container.style.height = 'auto';
       } else {
-        this.elements.terminalModal.classList.add('maximized');
-        this.elements.terminalModal.style.width = '95vw';
-        this.elements.terminalModal.style.height = '80vh';
+        this.elements.sharedElements.modal.terminal.container.classList.add('maximized');
+        this.elements.sharedElements.modal.terminal.container.style.width = '95vw';
+        this.elements.sharedElements.modal.terminal.container.style.height = '80vh';
       }
     });
 
     window.addEventListener('click', (event) => {
-      if (event.target === this.elements.powerModal) {
-        closeModal(this.elements.powerModal);
+      if (event.target === this.elements.sharedElements.modal.power.container) {
+        closeModal(this.elements.sharedElements.modal.power.container);
       }
-      if (event.target === this.elements.terminalModal) {
-        closeModal(this.elements.terminalModal);
+      if (event.target === this.elements.sharedElements.modal.terminal.container) {
+        closeModal(this.elements.sharedElements.modal.terminal.container);
       }
     });
 
-    this.elements.modalBoot.addEventListener('click', () => this.handleAction('boot'));
-    this.elements.modalReboot.addEventListener('click', () => this.handleAction('reboot'));
-    this.elements.modalShutdown.addEventListener('click', () => this.handleAction('shutdown'));
+    this.elements.sharedElements.modal.power.boot.addEventListener('click', () => this.handleAction('boot'));
+    this.elements.sharedElements.modal.power.reboot.addEventListener('click', () => this.handleAction('reboot'));
+    this.elements.sharedElements.modal.power.shutdown.addEventListener('click', () => this.handleAction('shutdown'));
   },
 
   async fetchData() {
@@ -560,7 +578,7 @@ const App = {
       }]
     };
 
-    new Chart(this.elements.overviewActivityChart, {
+    new Chart(this.elements.sharedElements.machineState.overviewActivityChart, {
       type: 'bar',
       data: chartData,
       options: {
@@ -835,13 +853,24 @@ const App = {
 
   setupToggleButtons(sectionPrefix) {
     document.querySelectorAll(`#${sectionPrefix} .toggle-specs`).forEach(button => {
-      button.addEventListener('click', () => {
-        const machineId = String(button.dataset.machineId);
-        const specsRow = document.getElementById(`${sectionPrefix}-specs-${machineId}`);
+      const machineId = String(button.dataset.machineId);
+      const specsRow = document.getElementById(`${sectionPrefix}-specs-${machineId}`);
+      
+      if (sectionPrefix === 'machines') {
+
+        if (specsRow) specsRow.style.display = 'table-row';
+        button.textContent = 'Hide Specs';
+      } else {
+        if (specsRow) specsRow.style.display = 'none';
+        button.textContent = 'Show Specs';
+      }
+      
+      button.addEventListener('click', (e) => {
+        e.stopPropagation();
         if (specsRow) {
-          const isVisible = specsRow.style.display !== 'none';
-          specsRow.style.display = isVisible ? 'none' : 'table-row';
-          button.textContent = isVisible ? 'Show Specs' : 'Hide Specs';
+          const isHidden = specsRow.style.display === 'none';
+          specsRow.style.display = isHidden ? 'table-row' : 'none';
+          button.textContent = isHidden ? 'Hide Specs' : 'Show Specs';
         }
       });
     });
@@ -859,14 +888,14 @@ const App = {
         }
         const machine = row.querySelector('td:first-child').textContent || `Machine ${machineId}`;
         console.log(`Power button clicked for ${machine}, powerState: ${row.querySelector('td:nth-child(3)').textContent.toLowerCase()}`);
-        this.elements.modalTitle.textContent = `Manage Power for ${machine}`;
-        this.elements.modalStatus.textContent = '';
-        this.elements.modalStatus.classList.remove('error');
-        this.elements.modalBoot.disabled = row.querySelector('td:nth-child(3)').textContent.toLowerCase() === 'running';
-        this.elements.modalReboot.disabled = row.querySelector('td:nth-child(3)').textContent.toLowerCase() !== 'running';
-        this.elements.modalShutdown.disabled = row.querySelector('td:nth-child(3)').textContent.toLowerCase() !== 'running';
-        this.elements.powerModal.style.display = 'flex';
-        this.elements.terminalModal.style.display = 'none';
+        this.elements.sharedElements.modal.power.title.textContent = `Manage Power for ${machine}`;
+        this.elements.sharedElements.modal.power.status.textContent = '';
+        this.elements.sharedElements.modal.power.status.classList.remove('error');
+        this.elements.sharedElements.modal.power.boot.disabled = row.querySelector('td:nth-child(3)').textContent.toLowerCase() === 'running';
+        this.elements.sharedElements.modal.power.reboot.disabled = row.querySelector('td:nth-child(3)').textContent.toLowerCase() !== 'running';
+        this.elements.sharedElements.modal.power.shutdown.disabled = row.querySelector('td:nth-child(3)').textContent.toLowerCase() !== 'running';
+        this.elements.sharedElements.modal.power.container.style.display = 'flex';
+        this.elements.sharedElements.modal.terminal.container.style.display = 'none';
         this.closeAllActionMenus();
       });
     });
@@ -882,15 +911,15 @@ const App = {
         }
         const machine = row.querySelector('td:first-child').textContent || `Machine ${machineId}`;
         console.log(`Terminal button clicked for ${machine}`);
-        this.elements.terminalTitle.textContent = `Terminal - ${machine}`;
+        this.elements.sharedElements.modal.terminal.title.textContent = `Terminal - ${machine}`;
         this.terminalHistory[machineId] = this.terminalHistory[machineId] || [`[ec2-user@machine${machineId} ~]$ `];
         this.terminalCommandIndex[machineId] = this.terminalHistory[machineId].length;
-        this.elements.terminalOutput.textContent = this.terminalHistory[machineId].join('');
-        this.elements.terminalInput.value = '';
-        this.elements.terminalModal.style.display = 'flex';
-        this.elements.powerModal.style.display = 'none';
-        this.elements.terminalInput.focus();
-        this.elements.terminalOutput.scrollTop = this.elements.terminalOutput.scrollHeight;
+        this.elements.sharedElements.modal.terminal.output.textContent = this.terminalHistory[machineId].join('');
+        this.elements.sharedElements.modal.terminal.input.value = '';
+        this.elements.sharedElements.modal.terminal.container.style.display = 'flex';
+        this.elements.sharedElements.modal.power.container.style.display = 'none';
+        this.elements.sharedElements.modal.terminal.input.focus();
+        this.elements.sharedElements.modal.terminal.output.scrollTop = this.elements.sharedElements.modal.terminal.output.scrollHeight;
         this.setupCursor();
         this.closeAllActionMenus();
       });
@@ -965,8 +994,8 @@ const App = {
     const machineId = this.currentMachineId;
     if (!machineId) return;
 
-    const statusDiv = this.elements.modalStatus;
-    const buttons = this.elements.powerModal.querySelectorAll('.modal-button:not(.modal-close)');
+    const statusDiv = this.elements.sharedElements.modal.power.status;
+    const buttons = this.elements.sharedElements.modal.power.container.querySelectorAll('.modal-button:not(.modal-close)');
     buttons.forEach(button => button.disabled = true);
     statusDiv.textContent = `${action.charAt(0).toUpperCase() + action.slice(1)} initiated...`;
     statusDiv.classList.remove('error');
@@ -1006,9 +1035,9 @@ const App = {
         };
         updatePowerState('overview-machines', 'overview');
         updatePowerState('machines-list', 'machines');
-        this.elements.modalBoot.disabled = result.powerState.toLowerCase() === 'running';
-        this.elements.modalReboot.disabled = result.powerState.toLowerCase() !== 'running';
-        this.elements.modalShutdown.disabled = result.powerState.toLowerCase() !== 'running';
+        this.elements.sharedElements.modal.power.boot.disabled = result.powerState.toLowerCase() === 'running';
+        this.elements.sharedElements.modal.power.reboot.disabled = result.powerState.toLowerCase() !== 'running';
+        this.elements.sharedElements.modal.power.shutdown.disabled = result.powerState.toLowerCase() !== 'running';
       }
     } catch (error) {
       statusDiv.textContent = `Error: ${error.message}`;
@@ -1016,10 +1045,11 @@ const App = {
     } finally {
       buttons.forEach(button => button.disabled = false);
     }
+    this.elements.sharedElements.machineState.loadingOverlay.style.display = 'flex';
   },
 
   hideLoadingOverlay() {
-    this.elements.loadingOverlay.style.display = 'none';
+    this.elements.sharedElements.machineState.loadingOverlay.style.display = 'none';
   },
 
   handleError(error, startTime) {
@@ -1028,7 +1058,7 @@ const App = {
     const remainingTime = this.minLoadingDuration - elapsedTime;
     setTimeout(() => {
       this.hideLoadingOverlay();
-      this.elements.errorNote.innerHTML = `Error: Failed to load machine data. ${error.message}`;
+      this.elements.sharedElements.machineState.errorNote.innerHTML = `Error: Failed to load machine data. ${error.message}`;
     }, Math.max(0, remainingTime));
   }
 };
