@@ -18,6 +18,15 @@
   --color-error: #e53e3e;
   --color-info: #3182ce;
   
+  --color-status-started: #1abc9c;
+  --color-status-stopped: #2c3e50;
+  --color-status-warning: #e67e22;
+  --color-status-critical: #f1c40f;
+  --color-status-error: #9b59b6;
+  --color-status-unknown: #491e1e;
+  --color-status-info: #3498db;
+  --color-status-disabled: #95a5a6;
+  
   --color-border: #d5dbdb;
   --color-divider: #3a4656;
   
@@ -513,10 +522,63 @@ table {
 }
 .status-badge {
   display: inline-block;
-  padding: 3px 8px;
+  padding: 3px 10px;
   border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
+  text-transform: capitalize;
+  min-width: 70px;
+  text-align: center;
+  border-left: 4px solid;
+  margin: 2px 0;
+}
+
+.status-badge.status-started {
+  background-color: color-mix(in srgb, var(--color-status-started) 10%, transparent);
+  color: var(--color-status-started);
+  border-left-color: var(--color-status-started);
+}
+
+.status-badge.status-stopped {
+  background-color: color-mix(in srgb, var(--color-status-stopped) 10%, transparent);
+  color: var(--color-status-stopped);
+  border-left-color: var(--color-status-stopped);
+}
+
+.status-badge.status-warning {
+  background-color: color-mix(in srgb, var(--color-status-warning) 10%, transparent);
+  color: var(--color-status-warning);
+  border-left-color: var(--color-status-warning);
+}
+
+.status-badge.status-critical {
+  background-color: color-mix(in srgb, var(--color-status-critical) 10%, transparent);
+  color: var(--color-status-critical);
+  border-left-color: var(--color-status-critical);
+}
+
+.status-badge.status-error {
+  background-color: color-mix(in srgb, var(--color-status-error) 10%, transparent);
+  color: var(--color-status-error);
+  border-left-color: var(--color-status-error);
+}
+
+.status-badge.status-unknown {
+  background-color: color-mix(in srgb, var(--color-status-unknown) 10%, transparent);
+  color: var(--color-status-unknown);
+  border-left-color: var(--color-status-unknown);
+}
+
+.status-badge.status-info {
+  background-color: color-mix(in srgb, var(--color-status-info) 10%, transparent);
+  color: var(--color-status-info);
+  border-left-color: var(--color-status-info);
+}
+
+.status-badge.status-disabled {
+  background-color: color-mix(in srgb, var(--color-status-disabled) 10%, transparent);
+  color: var(--color-status-disabled);
+  border-left-color: var(--color-status-disabled);
 }
 
 .status-online {
@@ -626,14 +688,14 @@ table {
   position: relative;
   vertical-align: middle;
 }
-.details-table tr:nth-child(1) th { border-left-color: #1abc9c; } 
-.details-table tr:nth-child(2) th { border-left-color: #2c3e50; } 
-.details-table tr:nth-child(3) th { border-left-color: #e67e22; } 
-.details-table tr:nth-child(4) th { border-left-color: #f1c40f; } 
-.details-table tr:nth-child(5) th { border-left-color: #9b59b6; } 
-.details-table tr:nth-child(6) th { border-left-color: #491e1ebb; } 
-.details-table tr:nth-child(7) th { border-left-color: #3498db; } 
-.details-table tr:nth-child(8) th { border-left-color: #95a5a6; } 
+.details-table tr:nth-child(1) th { border-left-color: var(--color-status-started); } 
+.details-table tr:nth-child(2) th { border-left-color: var(--color-status-stopped); } 
+.details-table tr:nth-child(3) th { border-left-color: var(--color-status-warning); } 
+.details-table tr:nth-child(4) th { border-left-color: var(--color-status-critical); } 
+.details-table tr:nth-child(5) th { border-left-color: var(--color-status-error); } 
+.details-table tr:nth-child(6) th { border-left-color: var(--color-status-unknown); } 
+.details-table tr:nth-child(7) th { border-left-color: var(--color-status-info); } 
+.details-table tr:nth-child(8) th { border-left-color: var(--color-status-disabled); } 
 
 .details-table th:hover {
   background-color: #f1f5f9;

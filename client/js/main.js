@@ -798,10 +798,29 @@ const App = {
   },
 
   createTableRow(label, value, className = '') {
-    const isStatusRow = label.toLowerCase() === 'status';
-    const formattedValue = isStatusRow 
-      ? `<span class="status-badge status-${value.toLowerCase()}">${value}</span>` 
-      : value;
+
+    const colorClasses = [
+      'status-started',    
+      'status-stopped',    
+      'status-warning',    
+      'status-critical',   
+      'status-error',      
+      'status-unknown',    
+      'status-info',       
+      'status-disabled'    
+    ];
+    
+    const labels = [
+      'status', 'architecture', 'processor', 'cores', 
+      'logical processors', 'machine id', 'last active'
+    ];
+    
+    const labelIndex = labels.indexOf(label.toLowerCase().trim());
+    const colorClass = colorClasses[Math.min(labelIndex, colorClasses.length - 1)] || '';
+    
+    const formattedValue = value 
+      ? `<span class="status-badge ${colorClass}">${value}</span>`
+      : 'N/A';
       
     return `
       <tr${className ? ` class="${className}"` : ''}>
