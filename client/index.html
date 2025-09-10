@@ -2,75 +2,313 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>OS - System Information</title>
-  <link rel="stylesheet" href="css/style.min.css">
+  <title>Cloud Console</title>
   <meta name="author" content="NatanR-dev">
-  <meta name="description" content="System Information">
+  <meta name="description" content="Machine Activity and Specifications">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="https://icones.pro/wp-content/uploads/2021/04/icone-de-nuage-orange.png" type="image/png">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div class="container">
-    <div class="loading-overlay">
-      <div class="loading-spinner">
-        <svg class="loading-spinner__circle" viewBox="25 25 50 50">
-          <circle class="loading-spinner__path" cx="50" cy="50" r="20" fill="none" stroke-width="6" stroke-miterlimit="10"/>
-        </svg>
-        <p>Loading...</p>
+    <div class="sidebar">
+      <h2>|> Cloud Console</h2>
+      <ul>
+        <li class="menu-item active" data-section="overview">
+          <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+          Overview
+        </li>
+        <li class="menu-item" data-toggle="machines-submenu">
+          <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+          Machines
+          <ul class="submenu" id="machines-submenu">
+            <li data-section="machines">State</li>
+            <li data-section="specs">Specs</li>
+            <li data-section="system">System</li>
+          </ul>
+        </li>
+        <li class="menu-item" data-toggle="activity-submenu">
+          <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+          Activity
+          <ul class="submenu" id="activity-submenu">
+            <li data-section="activity">Timeline</li>
+            <li data-section="logs">Logs</li>
+          </ul>
+        </li>
+        <li class="menu-item" data-section="snapshots">
+          <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+          Snapshots
+        </li>
+        <li class="menu-item" data-toggle="settings-submenu">
+          <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+          Settings
+          <ul class="submenu" id="settings-submenu">
+            <li data-section="account">Account</li>
+          </ul>
+        </li>
+      </ul>
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="logout-btn">
+          <div class="logout-icon-wrapper">
+            <svg class="power-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <path d="M16 17l5-5-5-5"></path>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </div>
+          <span class="logout-text">Logout</span>
+        </button>
       </div>
     </div>
-    <div class="window-controls">
-      <div class="window-button minimize">–</div>
-      <div class="window-button maximize">□</div>
-      <div class="window-button close">×</div>
-    </div>
-    <h1>System Information</h1>
-    <h2>Operating System</h2>
-    <div class="os-info-container">
-      <p id="os-info"></p>
-      <img
-        id="os-logo"
-        style="display: none;"
-        src="https://upload.wikimedia.org/wikipedia/commons/5/5f/Windows_logo_-_2012.svg"
-        alt="Windows Logo"
-        onerror="console.error('Failed to load Windows logo');"
-      />
-    </div>
-    <p id="error-note" class="error-note"></p>
-    <h2>Processor Information</h2>
-    <div id="system-info">
-      <div class="tabs">
-        <div class="tab active" data-tab="system">System</div>
-        <div class="tab" data-tab="performance">Performance</div>
-      </div>
-      <div id="system" class="tab-content active">
-        <table class="details-table">
-          <tbody id="details-table-body"></tbody>
-        </table>
-      </div>
-      <div id="performance" class="tab-content">
-        <div class="chart-container">
-          <canvas id="bar-chart"></canvas>
-          <canvas id="radar-chart"></canvas>
+    <div class="main-content">
+      <div class="content-section active" id="overview">
+        <div class="header">
+          <h1>Overview</h1>
         </div>
-        <div class="windows-experience-index-evaluation">
-          <h3>System Assessment (Windows Experience Index)</h3>
-          <table class="windows-experience-index-table">
+        <div class="loading-overlay">
+          <div class="loading-spinner">
+            <svg class="loading-spinner__circle" viewBox="25 25 50 50">
+              <circle class="loading-spinner__path" cx="50" cy="50" r="20" fill="none" stroke-width="6" stroke-miterlimit="10"/>
+            </svg>
+            <p>Loading...</p>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Connected Machines</h2>
+          <table class="machine-table">
             <thead>
               <tr>
-                <th>Component</th>
-                <th>Score</th>
+                <th>Machine ID</th>
+                <th>OS</th>
+                <th>Power State</th>
+                <th>Last Login</th>
+                <th>IP Address</th>
+                <th>Location</th>
+                <th>Login Count</th>
+                <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="windows-experience-index-table-body"></tbody>
+            <tbody id="overview-machines"></tbody>
           </table>
-          <p class="windows-experience-index-note">
-            The base score is determined by the lowest score among the assessed components. The rating reflects overall system performance.
-          </p>
+        </div>
+        <div class="card">
+          <h2>Machine Activity Overview</h2>
+          <div class="chart-container">
+            <canvas id="overview-activity-chart"></canvas>
+          </div>
+        </div>
+        <p id="error-note" class="error-note"></p>
+      </div>
+      <div class="content-section" id="machines">
+        <div class="header">
+          <h1>Machines</h1>
+        </div>
+        <div class="card">
+          <h2>Connected Machines</h2>
+          <table class="machine-table">
+            <thead>
+              <tr>
+                <th>Machine ID</th>
+                <th>OS</th>
+                <th>Power State</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="machines-list"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="content-section" id="specs">
+        <div class="header">
+          <h1>Specs</h1>
+        </div>
+        <div class="card">
+          <h2>Machine Specifications</h2>
+          <table class="specs-table">
+            <thead>
+              <tr>
+                <th>Machine ID</th>
+                <th>Architecture</th>
+                <th>Processor</th>
+                <th>Cores</th>
+                <th>Logical Processors</th>
+              </tr>
+            </thead>
+            <tbody id="specs-list"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="content-section" id="system">
+        <div class="header">
+          <h1>System</h1>
+        </div>
+        <div class="card">
+          <h2>Operating Systems</h2>
+          <table class="system-table">
+            <thead>
+              <tr>
+                <th>Machine ID</th>
+                <th>OS</th>
+              </tr>
+            </thead>
+            <tbody id="system-list"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="content-section" id="activity">
+        <div class="header">
+          <h1>Activity</h1>
+        </div>
+        <div class="card">
+          <h2>Machine Activity</h2>
+          <table class="activity-table">
+            <thead>
+              <tr>
+                <th>Machine ID</th>
+                <th>Last Login</th>
+                <th>IP Address</th>
+                <th>Login Count</th>
+              </tr>
+            </thead>
+            <tbody id="activity-list"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h2>Login Timeline</h2>
+          <select id="timeline-filter" class="timeline-filter">
+            <option value="all">All Machines</option>
+          </select>
+          <div class="timeline" id="login-timeline"></div>
+        </div>
+      </div>
+      <div class="content-section" id="logs">
+        <div class="header">
+          <h1>Logs</h1>
+        </div>
+        <div class="card">
+          <h2>System Logs</h2>
+          <select id="logs-filter" class="logs-filter">
+            <option value="all">All Machines</option>
+          </select>
+          <table class="logs-table">
+            <thead>
+              <tr>
+                <th>Machine ID</th>
+                <th>Timestamp</th>
+                <th>Severity</th>
+                <th>Message</th>
+              </tr>
+            </thead>
+            <tbody id="logs-list"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="content-section" id="snapshots">
+        <div class="header">
+          <h1>Snapshots</h1>
+        </div>
+        <div class="card">
+          <h2>Machine Snapshots</h2>
+          <select id="snapshots-filter" class="snapshots-filter">
+            <option value="all">All Machines</option>
+          </select>
+          <table class="snapshots-table">
+            <thead>
+              <tr>
+                <th>Machine ID</th>
+                <th>Snapshot ID</th>
+                <th>Creation Time</th>
+                <th>Size</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="snapshots-list"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="content-section" id="account">
+        <div class="header">
+          <h1>Account Settings</h1>
+        </div>
+        <div class="card">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="account-name">Account Name</label>
+              <input type="text" id="account-name" class="form-control" value="Demo User">
+            </div>
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" class="form-control" value="user@example.com">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="region">Region</label>
+              <select id="region" class="form-control">
+                <option value="sa-east-1" selected>South America (São Paulo)</option>
+                <option value="us-east-1">US East (N. Virginia)</option>
+                <option value="us-west-2">US West (Oregon)</option>
+                <option value="eu-west-1">EU (Ireland)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Multi-Factor Auth</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="mfa-enabled" class="toggle-input">
+                <span class="toggle-slider"></span>
+              </div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="save-settings">Save Changes</button>
+          </div>
+          <div id="settings-status" class="settings-status"></div>
+        </div>
+      </div>
+      <div class="modal" id="power-modal">
+        <div class="modal-content">
+          <h3 id="modal-title">Manage Machine Power</h3>
+          <div class="modal-actions">
+            <button class="modal-button" id="modal-boot">Boot</button>
+            <button class="modal-button" id="modal-reboot">Reboot</button>
+            <button class="modal-button" id="modal-shutdown">Shutdown</button>
+          </div>
+          <div id="modal-status" class="modal-status"></div>
+          <button class="modal-button modal-close" id="modal-close">Close</button>
+        </div>
+      </div>
+      <div class="modal" id="terminal-modal">
+        <div class="terminal-modal-content">
+          <div class="terminal-header">
+            <span class="terminal-header-title" id="terminal-title">Terminal - Machine</span>
+            <div class="terminal-controls">
+              <span class="terminal-control minimize"></span>
+              <span class="terminal-control maximize"></span>
+              <span class="terminal-control close"></span>
+            </div>
+          </div>
+          <div class="terminal-output" id="terminal-output"></div>
+          <div class="terminal-input-container">
+            <span class="terminal-prompt">$</span>
+            <input type="text" class="terminal-input" id="terminal-input" autocomplete="off">
+            <span class="terminal-cursor"></span>
+          </div>
         </div>
       </div>
     </div>
   </div>
-
-  <script src="js/main.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>

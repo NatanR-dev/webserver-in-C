@@ -1,378 +1,1066 @@
-const ChartConfig = {
-    labels: ['Cores', 'Logical Processors', 'Architecture'],
-    datasets: {
-      bar: {
-        label: 'System Score',
-        backgroundColors: ['#003087', '#005a9e', '#0078d4'],
-        borderColors: ['#002060', '#003c6e', '#004f8c'],
-        borderWidth: 1
+const App = {
+  elements: {
+
+    settings: {
+      form: document.querySelector('#account .card'),
+      saveButton: document.getElementById('save-settings'),
+      status: document.getElementById('settings-status')
+    },
+    
+    overview: {
+      container: document.getElementById('overview'),
+      machinesList: document.getElementById('overview-machines'),
+      activityChart: document.getElementById('overview-activity-chart'),
+      machines: document.getElementById('overview-machines')
+    },
+    
+    overviewMachines: document.getElementById('overview-machines'),
+
+    machines: {
+      container: document.getElementById('machines'),
+      list: document.getElementById('machines-list'),
+      specs: {
+        container: document.getElementById('specs'),
+        list: document.getElementById('specs-list')
       },
-      radar: {
-        label: 'System Specifications',
-        backgroundColor: 'rgba(0, 48, 135, 0.2)',
-        borderColor: '#003087',
-        borderWidth: 2,
-        pointBackgroundColor: '#003087',
-        pointBorderColor: '#ffffff',
-        pointRadius: 4
+      system: {
+        container: document.getElementById('system'),
+        list: document.getElementById('system-list')
       }
     },
-    maxValue: 9.9
-  };
-
-  const SystemInfoApp = {
-    elements: {
-      osInfo: document.getElementById('os-info'),
-      osLogo: document.getElementById('os-logo'),
-      errorNote: document.getElementById('error-note'),
-      detailsTableBody: document.getElementById('details-table-body'),
-      windowsExperienceIndexTableBody: document.getElementById('windows-experience-index-table-body'),
-      container: document.querySelector('.container'),
-      loadingOverlay: document.querySelector('.loading-overlay'),
-      tabs: document.querySelectorAll('.tab'),
-      tabContents: document.querySelectorAll('.tab-content')
-    },
-
-    minLoadingDuration: 1000,
-
-    initialize() {
-      this.setupTabSwitching();
-      this.loadSystemData();
-    },
-
-    setupTabSwitching() {
-      this.elements.tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          this.elements.tabs.forEach(t => t.classList.remove('active'));
-          this.elements.tabContents.forEach(tc => tc.classList.remove('active'));
-          tab.classList.add('active');
-          document.getElementById(tab.dataset.tab).classList.add('active');
-        });
-      });
-    },
-
-    async loadSystemData() {
-      const startTime = Date.now();
-      try {
-        const [osResponse, systemResponse] = await this.fetchData();
-        console.log('OS API Response:', { status: osResponse.status, os: osResponse.data.os });
-        console.log('System API Response - Architecture:', systemResponse.arch);
-
-        const elapsedTime = Date.now() - startTime;
-        const remainingTime = this.minLoadingDuration - elapsedTime;
-
-        setTimeout(() => {
-          this.renderData(osResponse, systemResponse);
-          this.hideLoadingOverlay();
-        }, Math.max(0, remainingTime));
-      } catch (error) {
-        this.handleError(error, startTime);
+    
+    activity: {
+      container: document.getElementById('activity'),
+      list: document.getElementById('activity-list'),
+      timeline: {
+        container: document.getElementById('login-timeline'),
+        filter: document.getElementById('timeline-filter')
       }
     },
-
-    async fetchData() {
-      const osResponse = await fetch('http://localhost:8080/os');
-      if (!osResponse.ok) throw new Error(`OS API failed with status: ${osResponse.status}`);
-      const systemResponse = await fetch('http://localhost:8080/sys');
-      if (!systemResponse.ok) throw new Error(`System API failed with status: ${systemResponse.status}`);
-      return [
-        { status: osResponse.status, data: await osResponse.json() },
-        await systemResponse.json()
-      ];
+    
+    logs: {
+      container: document.getElementById('logs'),
+      list: document.getElementById('logs-list'),
+      filter: document.getElementById('logs-filter')
     },
-
-    renderData(osResponse, systemResponse) {
-      this.renderOperatingSystemInfo(osResponse);
-      this.renderSystemDetails(systemResponse);
-      this.renderChartsAndEvaluation(systemResponse);
+    
+    snapshots: {
+      container: document.getElementById('snapshots'),
+      list: document.getElementById('snapshots-list'),
+      filter: document.getElementById('snapshots-filter')
     },
+    
+    sharedElements: {
 
-    renderOperatingSystemInfo({ status, data: { os } }) {
-      this.elements.osInfo.innerHTML = `Operating System: ${os}`;
-      if (status === 200 && os === 'Windows') {
-        console.log('Displaying Windows logo');
-        this.elements.osLogo.style.display = 'block';
-      } else {
-        console.log('Windows logo not displayed - OS:', os, 'Status:', status);
-      }
-    },
+      machineState: {
+        errorNote: document.getElementById('error-note'),
+        loadingOverlay: document.querySelector('.loading-overlay'),
+        overviewActivityChart: document.getElementById('overview-activity-chart')
+      },
+      
+      modal: {
 
-    renderSystemDetails(systemResponse) {
-      const tableRows = this.generateSystemDetailsRows(systemResponse);
-      this.elements.detailsTableBody.innerHTML = tableRows.join('');
-    },
-
-    generateSystemDetailsRows(systemResponse) {
-      const rows = [];
-      if (systemResponse.os === 'Windows') {
-        rows.push(this.createTableRow('Architecture', systemResponse.arch));
-        rows.push(this.createTableRow('Processor', systemResponse.processorArchitecture));
-        rows.push(this.createTableRow('Cores', systemResponse.numberOfCores));
-        rows.push(this.createTableRow('Logical Processors', systemResponse.numberOfLogicalProcessors));
-      } else if (systemResponse.os === 'Linux' || systemResponse.os === 'macOS') {
-        rows.push(this.createTableRow('System', systemResponse.sysname));
-        rows.push(this.createTableRow('Version', systemResponse.release));
-        rows.push(this.createTableRow('Machine', systemResponse.machine));
-        rows.push(this.createTableRow('Cores', systemResponse.numberOfCores));
-      }
-      rows.push(this.createTableRow('Date and Time', systemResponse.datetime));
-      return rows;
-    },
-
-    createTableRow(label, value, className = '') {
-      return `<tr${className ? ` class="${className}"` : ''}><th>${label}</th><td>${value}</td></tr>`;
-    },
-
-    renderChartsAndEvaluation(systemResponse) {
-      const chartData = this.calculateChartData(systemResponse);
-      this.renderWindowsExperienceIndexTable(chartData);
-      this.renderBarChart(chartData);
-      this.renderRadarChart(chartData);
-    },
-
-    calculateChartData(systemResponse) {
-      const architectureValue = systemResponse.arch ? systemResponse.arch.toLowerCase() : '';
-      const architectureScore = this.calculateArchitectureScore(architectureValue);
-
-      if (!['x64', 'amd64', 'x86_64', '9', 'arm64'].includes(architectureValue)) {
-        this.elements.errorNote.innerHTML = `Warning: Unrecognized architecture '${systemResponse.arch}'. Defaulting to score 4.5.`;
-      }
-      console.log('Calculated Architecture Score:', architectureScore);
-
-      return {
-        labels: ChartConfig.labels,
-        datasets: [{
-          label: ChartConfig.datasets.bar.label,
-          data: [
-            Math.min((systemResponse.numberOfCores / 8) * ChartConfig.maxValue, ChartConfig.maxValue) || 1.0,
-            Math.min((systemResponse.numberOfLogicalProcessors / 16) * ChartConfig.maxValue, ChartConfig.maxValue) || (systemResponse.numberOfCores / 8) * ChartConfig.maxValue || 1.0,
-            architectureScore
-          ],
-          backgroundColor: ChartConfig.datasets.bar.backgroundColors,
-          borderColor: ChartConfig.datasets.bar.borderColors,
-          borderWidth: ChartConfig.datasets.bar.borderWidth
-        }]
-      };
-    },
-
-    calculateArchitectureScore(architectureValue) {
-      return ['x64', 'amd64', 'x86_64', '9'].includes(architectureValue) ? 8.0
-           : architectureValue === 'arm64' ? 6.5
-           : 4.5;
-    },
-
-    renderWindowsExperienceIndexTable(chartData) {
-      const rows = chartData.datasets[0].data.map((score, index) =>
-        this.createTableRow(chartData.labels[index], score.toFixed(1))
-      );
-      const baseScore = Number(Math.min(...chartData.datasets[0].data).toFixed(1));
-      const rating = this.calculateRating(baseScore);
-      console.log('Base Score:', baseScore, 'Rating:', rating);
-
-      rows.push(this.createTableRow('Base Score', baseScore.toFixed(1), 'base-score'));
-      rows.push(this.createTableRow('Rating', rating, 'rating'));
-      this.elements.windowsExperienceIndexTableBody.innerHTML = rows.join('');
-    },
-
-    calculateRating(baseScore) {
-      return baseScore >= 7.0 ? 'Excellent'
-           : baseScore >= 4.9 ? 'Good'
-           : baseScore >= 3.0 ? 'Fair'
-           : 'Poor';
-    },
-
-    renderBarChart(chartData) {
-      const context = document.getElementById('bar-chart').getContext('2d');
-      context.canvas.width = 400;
-      context.canvas.height = 200;
-      this.drawBarChartGrid(context);
-      this.drawBarChartBars(context, chartData);
-      this.drawBarChartAxes(context);
-    },
-
-    drawBarChartGrid(context) {
-      const width = context.canvas.width;
-      const height = context.canvas.height;
-      for (let i = 0; i <= 5; i++) {
-        const y = height - (i * (height - 40) / 5) - 20;
-        context.beginPath();
-        context.moveTo(30, y);
-        context.lineTo(width - 10, y);
-        context.strokeStyle = '#e0e0e0';
-        context.stroke();
-        context.fillStyle = '#333333';
-        context.font = '12px Segoe UI';
-        context.textAlign = 'right';
-        context.fillText((i * 2).toFixed(1), 25, y + 5);
-      }
-    },
-
-    drawBarChartBars(context, chartData) {
-      const width = context.canvas.width;
-      const height = context.canvas.height;
-      const barWidth = 80;
-      const scaleY = (height - 40) / ChartConfig.maxValue;
-      const barSpacing = 20;
-
-      chartData.datasets[0].data.forEach((value, index) => {
-        const x = 50 + index * (barWidth + barSpacing);
-        const barHeight = value * scaleY;
-        context.fillStyle = chartData.datasets[0].backgroundColor[index];
-        context.fillRect(x, height - barHeight - 20, barWidth, barHeight);
-        context.strokeStyle = chartData.datasets[0].borderColor[index];
-        context.strokeRect(x, height - barHeight - 20, barWidth, barHeight);
-
-        context.fillStyle = '#333333';
-        context.font = '12px Segoe UI';
-        context.textAlign = 'center';
-        context.fillText(chartData.labels[index], x + barWidth / 2, height - 5);
-        context.fillText(value.toFixed(1), x + barWidth / 2, height - barHeight - 25);
-      });
-    },
-
-    drawBarChartAxes(context) {
-      const width = context.canvas.width;
-      const height = context.canvas.height;
-      context.beginPath();
-      context.moveTo(30, height - 20);
-      context.lineTo(width - 10, height - 20);
-      context.moveTo(30, height - 20);
-      context.lineTo(30, 20);
-      context.strokeStyle = '#b0b0b0';
-      context.stroke();
-    },
-
-    renderRadarChart(chartData) {
-      const context = document.getElementById('radar-chart').getContext('2d');
-      context.canvas.width = 200;
-      context.canvas.height = 200;
-      const radarData = this.transformToRadarData(chartData);
-      this.drawRadarChartGrid(context, radarData);
-      this.drawRadarChartAxes(context, radarData);
-      this.drawRadarChartData(context, radarData);
-    },
-
-    transformToRadarData(chartData) {
-      return {
-        labels: chartData.labels,
-        datasets: [{
-          label: ChartConfig.datasets.radar.label,
-          data: chartData.datasets[0].data.map(score => (score / ChartConfig.maxValue) * 100),
-          backgroundColor: ChartConfig.datasets.radar.backgroundColor,
-          borderColor: ChartConfig.datasets.radar.borderColor,
-          borderWidth: ChartConfig.datasets.radar.borderWidth,
-          pointBackgroundColor: ChartConfig.datasets.radar.pointBackgroundColor,
-          pointBorderColor: ChartConfig.datasets.radar.pointBorderColor,
-          pointRadius: ChartConfig.datasets.radar.pointRadius
-        }]
-      };
-    },
-
-    drawRadarChartGrid(context, chartData) {
-      const width = context.canvas.width;
-      const height = context.canvas.height;
-      const centerX = width / 2;
-      const centerY = height / 2;
-      const radius = 80;
-      const numPoints = chartData.labels.length;
-
-      for (let r = 20; r <= 100; r += 20) {
-        context.beginPath();
-        for (let i = 0; i < numPoints; i++) {
-          const angle = (Math.PI * 2 * i) / numPoints - Math.PI / 2;
-          const x = centerX + Math.cos(angle) * r;
-          const y = centerY + Math.sin(angle) * r;
-          if (i === 0) context.moveTo(x, y);
-          else context.lineTo(x, y);
+        power: {
+          container: document.getElementById('power-modal'),
+          title: document.getElementById('modal-title'),
+          boot: document.getElementById('modal-boot'),
+          reboot: document.getElementById('modal-reboot'),
+          shutdown: document.getElementById('modal-shutdown'),
+          status: document.getElementById('modal-status'),
+          close: document.getElementById('modal-close')
+        },
+        
+        terminal: {
+          container: document.getElementById('terminal-modal'),
+          title: document.getElementById('terminal-title'),
+          output: document.getElementById('terminal-output'),
+          input: document.getElementById('terminal-input'),
+          minimize: document.querySelector('.terminal-control.minimize'),
+          maximize: document.querySelector('.terminal-control.maximize'),
+          close: document.querySelector('.terminal-control.close'),
+          cursor: document.querySelector('.terminal-cursor')
         }
-        context.closePath();
-        context.strokeStyle = '#e0e0e0';
-        context.stroke();
+      },
+      
+      layout: {
+        sidebar: {
+          items: document.querySelectorAll('.sidebar .menu-item'),
+          subItems: document.querySelectorAll('.sidebar .submenu li')
+        },
+        contentSections: document.querySelectorAll('.content-section'),
+        mainContent: document.querySelector('.main-content')
       }
-    },
+    }
+  },
 
-    drawRadarChartAxes(context, chartData) {
-      const width = context.canvas.width;
-      const height = context.canvas.height;
-      const centerX = width / 2;
-      const centerY = height / 2;
-      const radius = 80;
-      const numPoints = chartData.labels.length;
+  currentMachineId: null,
+  minLoadingDuration: 1000,
+  terminalHistory: {},
+  terminalCommandIndex: {},
+  isTerminalMaximized: false,
+  machinesData: [],
 
-      for (let i = 0; i < numPoints; i++) {
-        const angle = (Math.PI * 2 * i) / numPoints - Math.PI / 2;
-        context.beginPath();
-        context.moveTo(centerX, centerY);
-        context.lineTo(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
-        context.strokeStyle = '#b0b0b0';
-        context.stroke();
+  initialize() {
+    console.log('Initializing application...');
+    
+    this.setupSidebar();
+    this.setupLogoutButton();
+    this.setupCursor();
+    this.setupSettings();
+    this.setupModals();
+    
+    setTimeout(() => {
+      this.loadMachineData();
+    }, 100);
+  },
 
-        context.fillStyle = '#333333';
-        context.font = '10px Segoe UI';
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-        const labelX = centerX + Math.cos(angle) * (radius + 15);
-        const labelY = centerY + Math.sin(angle) * (radius + 15);
-        context.fillText(chartData.labels[i], labelX, labelY);
-      }
-    },
+  setupLogoutButton() {
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
 
-    drawRadarChartData(context, chartData) {
-      const width = context.canvas.width;
-      const height = context.canvas.height;
-      const centerX = width / 2;
-      const centerY = height / 2;
-      const radius = 80;
-      const numPoints = chartData.labels.length;
+        console.log('Logout clicked');
 
-      context.beginPath();
-      chartData.datasets[0].data.forEach((value, i) => {
-        const angle = (Math.PI * 2 * i) / numPoints - Math.PI / 2;
-        const r = (value / 100) * radius;
-        const x = centerX + Math.cos(angle) * r;
-        const y = centerY + Math.sin(angle) * r;
-        if (i === 0) context.moveTo(x, y);
-        else context.lineTo(x, y);
-        context.fillStyle = chartData.datasets[0].pointBackgroundColor;
-        context.beginPath();
-        context.arc(x, y, chartData.datasets[0].pointRadius, 0, Math.PI * 2);
-        context.fill();
-        context.strokeStyle = chartData.datasets[0].pointBorderColor;
-        context.stroke();
+        alert('Logout successful!');
       });
-      context.closePath();
-      context.fillStyle = chartData.datasets[0].backgroundColor;
-      context.fill();
-      context.strokeStyle = chartData.datasets[0].borderColor;
-      context.stroke();
+    }
+  },
 
-      context.fillStyle = '#333333';
-      context.font = '10px Segoe UI';
-      chartData.datasets[0].data.forEach((value, i) => {
-        const angle = (Math.PI * 2 * i) / numPoints - Math.PI / 2;
-        const r = (value / 100) * radius + 15;
-        const x = centerX + Math.cos(angle) * r;
-        const y = centerY + Math.sin(angle) * r;
-        context.fillText(`${Math.round(value)}%`, x, y);
+  setupSidebar() {
+    this.elements.sharedElements.layout.sidebar.items.forEach(item => {
+      item.addEventListener('click', (e) => {
+        const sectionId = item.dataset.section;
+        const toggleId = item.dataset.toggle;
+
+        if (toggleId) {
+          e.stopPropagation();
+          const submenu = document.getElementById(toggleId);
+          const isActive = submenu.classList.contains('active');
+
+          document.querySelectorAll('.sidebar .submenu').forEach(sm => {
+            sm.classList.remove('active');
+            sm.parentElement.classList.remove('active');
+          });
+
+          if (!isActive) {
+            submenu.classList.add('active');
+            item.classList.add('active');
+            console.log(`Submenu ${toggleId} expanded`);
+          }
+        } else if (sectionId) {
+          
+          this.elements.sharedElements.layout.sidebar.items.forEach(i => i.classList.remove('active'));
+          this.elements.sharedElements.layout.sidebar.subItems.forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+          this.elements.sharedElements.layout.contentSections.forEach(section => section.classList.remove('active'));
+          document.getElementById(sectionId).classList.add('active');
+          console.log(`Navigated to section: ${sectionId}`);
+          this.handleSectionNavigation(sectionId);
+        }
       });
-    },
+    });
 
-    hideLoadingOverlay() {
-      this.elements.loadingOverlay.style.display = 'none';
-      this.elements.container.classList.add('loaded');
-    },
+    this.elements.sharedElements.layout.sidebar.subItems.forEach(subItem => {
+      subItem.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const sectionId = subItem.dataset.section;
+        this.elements.sharedElements.layout.sidebar.items.forEach(i => i.classList.remove('active'));
+        this.elements.sharedElements.layout.sidebar.subItems.forEach(i => i.classList.remove('active'));
+        subItem.classList.add('active');
+        subItem.parentElement.classList.add('active');
+        subItem.parentElement.parentElement.classList.add('active');
+        this.elements.sharedElements.layout.contentSections.forEach(section => section.classList.remove('active'));
+        document.getElementById(sectionId).classList.add('active');
+        console.log(`Navigated to subsection: ${sectionId}`);
+        this.handleSectionNavigation(sectionId);
+      });
+    });
+  },
 
-    handleError(error, startTime) {
-      console.error('Error loading data:', error.message);
-      console.error('Error stack:', error.stack);
-      console.log('Entering catch block, hiding overlay after delay');
+  handleSectionNavigation(sectionId) {
+    if (sectionId === 'activity') {
+      this.renderTimeline(this.machinesData);
+    } else if (sectionId === 'logs') {
+      this.renderLogs(this.machinesData);
+    } else if (sectionId === 'snapshots') {
+      this.renderSnapshots(this.machinesData);
+    }
+  },
+
+  setupCursor() {
+    const input = this.elements.sharedElements.modal.terminal.input;
+    const cursor = this.elements.sharedElements.modal.terminal.cursor;
+    const container = document.querySelector('.terminal-input-container');
+    const prompt = document.querySelector('.terminal-prompt');
+
+    const textMeasure = document.createElement('span');
+    textMeasure.className = 'text-measure';
+    container.appendChild(textMeasure);
+
+    const updateCursorPosition = () => {
+      textMeasure.textContent = input.value;
+      const promptWidth = prompt.getBoundingClientRect().width;
+      const textWidth = textMeasure.getBoundingClientRect().width;
+      cursor.style.left = `${promptWidth + textWidth + 10}px`;
+      //cursor.style.top = `${(input.offsetHeight - 14) / 2}px`;
+    };
+
+    input.addEventListener('input', updateCursorPosition);
+    input.addEventListener('keydown', updateCursorPosition);
+    input.addEventListener('click', updateCursorPosition);
+    input.addEventListener('focus', updateCursorPosition);
+
+    updateCursorPosition();
+  },
+
+  setupSettings() {
+    const form = document.querySelector('#account .card');
+    const saveButton = document.getElementById('save-settings');
+    const status = document.getElementById('settings-status');
+
+    const mockSettings = {
+      accountName: 'Lorem User',
+      email: 'user@mail.com',
+      region: 'sa-east-1',
+      mfaEnabled: false
+    };
+
+    if (form) {
+      form.querySelector('#account-name').value = mockSettings.accountName;
+      form.querySelector('#email').value = mockSettings.email;
+      form.querySelector('#region').value = mockSettings.region;
+      form.querySelector('#mfa-enabled').checked = mockSettings.mfaEnabled;
+    }
+
+    if (saveButton) {
+      saveButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        const accountName = form.querySelector('#account-name').value.trim();
+        const email = form.querySelector('#email').value.trim();
+        const region = form.querySelector('#region').value;
+        const mfaEnabled = form.querySelector('#mfa-enabled').checked;
+
+        if (!accountName || !email) {
+          this.showStatusMessage('Please fill in all required fields', 'error');
+          return;
+        }
+
+        if (!/^\S+@\S+\.\S+$/.test(email)) {
+          this.showStatusMessage('Please enter a valid email address', 'error');
+          return;
+        }
+
+        console.log('Saving settings:', { accountName, email, region, mfaEnabled });
+        this.showStatusMessage('Settings saved successfully!', 'success');
+      });
+    }
+
+    const accountSection = document.getElementById('account');
+    if (accountSection) {
+      accountSection.classList.remove('active');
+    }
+  },
+  
+  showStatusMessage(message, type = 'info') {
+    const status = document.getElementById('settings-status');
+    if (status) {
+      status.textContent = message;
+      status.className = 'settings-status';
+      status.classList.add(type);
+      
+      setTimeout(() => {
+        status.textContent = '';
+        status.className = 'settings-status';
+      }, 3000);
+    }
+  },
+
+  async loadMachineData() {
+    const startTime = Date.now();
+    try {
+      const machinesData = await this.fetchData();
+      this.machinesData = machinesData;
+      console.log('Stored machinesData:', this.machinesData);
       const elapsedTime = Date.now() - startTime;
       const remainingTime = this.minLoadingDuration - elapsedTime;
+
       setTimeout(() => {
+        this.renderOverview(machinesData);
+        this.renderMachines(machinesData);
+        this.renderSpecs(machinesData);
+        this.renderSystem(machinesData);
+        this.renderActivity(machinesData);
+        this.renderLogs(machinesData);
+        this.renderSnapshots(machinesData);
         this.hideLoadingOverlay();
-        this.elements.errorNote.innerHTML = `Error: Failed to load system data. ${error.message}`;
       }, Math.max(0, remainingTime));
+    } catch (error) {
+      this.handleError(error, startTime);
     }
-  };
-  
-  SystemInfoApp.initialize();
+  },
+
+  setupModals() {
+    const closeModal = (modal) => {
+      modal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+    };
+
+    this.elements.sharedElements.modal.power.close.addEventListener('click', () => {
+      closeModal(this.elements.sharedElements.modal.power.container);
+    });
+
+    this.elements.sharedElements.modal.terminal.close.addEventListener('click', () => {
+      closeModal(this.elements.sharedElements.modal.terminal.container);
+    });
+
+    this.elements.sharedElements.modal.terminal.minimize.addEventListener('click', () => {
+      if (this.elements.sharedElements.modal.terminal.container.classList.contains('minimized')) {
+        this.elements.sharedElements.modal.terminal.container.classList.remove('minimized');
+      } else {
+        this.elements.sharedElements.modal.terminal.container.classList.add('minimized');
+      }
+    });
+
+    this.elements.sharedElements.modal.terminal.maximize.addEventListener('click', () => {
+      if (this.elements.sharedElements.modal.terminal.container.classList.contains('maximized')) {
+        this.elements.sharedElements.modal.terminal.container.classList.remove('maximized');
+        this.elements.sharedElements.modal.terminal.container.style.width = '600px';
+        this.elements.sharedElements.modal.terminal.container.style.height = 'auto';
+      } else {
+        this.elements.sharedElements.modal.terminal.container.classList.add('maximized');
+        this.elements.sharedElements.modal.terminal.container.style.width = '95vw';
+        this.elements.sharedElements.modal.terminal.container.style.height = '80vh';
+      }
+    });
+
+    window.addEventListener('click', (event) => {
+      if (event.target === this.elements.sharedElements.modal.power.container) {
+        closeModal(this.elements.sharedElements.modal.power.container);
+      }
+      if (event.target === this.elements.sharedElements.modal.terminal.container) {
+        closeModal(this.elements.sharedElements.modal.terminal.container);
+      }
+    });
+
+    this.elements.sharedElements.modal.power.boot.addEventListener('click', () => this.handleAction('boot'));
+    this.elements.sharedElements.modal.power.reboot.addEventListener('click', () => this.handleAction('reboot'));
+    this.elements.sharedElements.modal.power.shutdown.addEventListener('click', () => this.handleAction('shutdown'));
+  },
+
+  async fetchData() {
+    try {
+      const [osResponse, sysResponse, machineResponse] = await Promise.all([
+        fetch('http://localhost:8080/api/os'),
+        fetch('http://localhost:8080/api/sys'),
+        fetch('http://localhost:8080/api/machine')
+      ]);
+
+      const osStatus = osResponse.status;
+      const sysStatus = sysResponse.status;
+      const machineStatus = machineResponse.status;
+      
+      console.log(`API status - OS: ${osStatus}, Sys: ${sysStatus}, Machine: ${machineStatus}`);
+
+      if (!osResponse.ok || !sysResponse.ok || !machineResponse.ok) {
+        throw new Error(`API failed - OS: ${osStatus}, Sys: ${sysStatus}, Machine: ${machineStatus}`);
+      }
+
+      const osData = await osResponse.json();
+      const sysData = await sysResponse.json();
+      const machineData = await machineResponse.json();
+
+      const osArray = Array.isArray(osData) ? osData : [osData];
+      const sysArray = Array.isArray(sysData) ? sysData : [sysData];
+      const machineArray = Array.isArray(machineData) ? machineData : [machineData];
+
+      const machines = osArray.map((os, index) => {
+        const machineInfo = machineArray[index] || machineArray[0] || {};
+        const machine = {
+          id: index + 1,
+          os: os.os || 'Unknown',
+          powerState: osStatus === 200 && sysStatus === 200 ? 'running' : 'stopped',
+          lastLogin: machineInfo.date || os.lastLogin || '2025-09-04 16:53:00',
+          ip: machineInfo.ip || os.ip || '192.168.1.100',
+          location: os.location || 'Unknown',
+          status: machineInfo.status || 'unknown',
+          info: machineInfo.info || {},
+          loginCount: os.loginCount || Math.floor(Math.random() * 10) + 1,
+          arch: sysArray[index]?.arch || 'Unknown',
+          processor: sysArray[index]?.processorArchitecture || 'Unknown',
+          cores: sysArray[index]?.numberOfCores || 0,
+          logicalProcessors: sysArray[index]?.numberOfLogicalProcessors || 0,
+          loginHistory: [],
+          logs: [],
+          snapshots: []
+        };
+        
+        machine.loginHistory = this.generateLoginHistory(machine.id, machine.lastLogin, machine.ip, machine.loginCount);
+        machine.logs = this.generateLogs(machine.id, machine.lastLogin);
+        machine.snapshots = this.generateSnapshots(machine.id, machine.lastLogin);
+        
+        console.log(`Machine ${machine.id} data:`, {
+          ...machine,
+          loginHistory: `[${machine.loginHistory.length} items]`,
+          logs: `[${machine.logs.length} items]`,
+          snapshots: `[${machine.snapshots.length} items]`
+        });
+        
+        return machine;
+      });
+
+      console.log('All machines data:', machines);
+      return machines;
+    } catch (error) {
+      console.error('Fetch error:', error);
+      throw error;
+    }
+  },
+
+  generateLoginHistory(machineId, lastLogin, ip, loginCount) {
+    const history = [];
+    const baseDate = lastLogin && !isNaN(Date.parse(lastLogin)) ? new Date(lastLogin) : new Date('2025-09-04T16:53:00');
+    const ipBase = ip && ip !== 'Unknown' ? ip.split('.')[0] + '.' + ip.split('.')[1] : '192.168';
+    const maxEvents = Math.min(loginCount * 2, 10);
+
+    if (loginCount < 1) {
+      console.warn(`No login history generated for Machine ${machineId}: loginCount is ${loginCount}`);
+      return history;
+    }
+
+    for (let i = 0; i < maxEvents; i += 2) {
+      const loginTime = new Date(baseDate.getTime() - (i * 24 * 60 * 60 * 1000) - (Math.random() * 12 * 60 * 60 * 1000));
+      const isFailed = Math.random() < 0.2;
+      const eventIp = `${ipBase}.${Math.floor(Math.random() * 10) + 1}.${Math.floor(Math.random() * 10) + 100}`;
+      history.push({
+        machineId,
+        eventType: 'Login',
+        status: isFailed ? 'Failed' : 'Successful',
+        timestamp: loginTime.toISOString().replace('T', ' ').slice(0, 19),
+        ip: eventIp,
+        loginCount: loginCount - Math.floor(i / 2)
+      });
+      if (i < maxEvents - 1 && !isFailed) {
+        const durationMs = Math.random() * 2 * 60 * 60 * 1000 + 60 * 1000;
+        const logoutTime = new Date(loginTime.getTime() + durationMs);
+        const durationStr = this.formatDuration(durationMs);
+        history.push({
+          machineId,
+          eventType: 'Logout',
+          status: 'Successful',
+          timestamp: logoutTime.toISOString().replace('T', ' ').slice(0, 19),
+          ip: eventIp,
+          loginCount: loginCount - Math.floor(i / 2),
+          sessionDuration: durationStr
+        });
+      }
+    }
+
+    const sortedHistory = history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    console.log(`Sorted loginHistory for Machine ${machineId}:`, sortedHistory);
+    return sortedHistory;
+  },
+
+  generateLogs(machineId, lastLogin) {
+    const logs = [];
+    const baseDate = lastLogin && !isNaN(Date.parse(lastLogin)) ? new Date(lastLogin) : new Date('2025-09-04T16:53:00');
+    const severities = ['INFO', 'WARNING', 'ERROR'];
+    const messages = [
+      'System started successfully',
+      'High CPU usage detected',
+      'Failed to connect to database',
+      'User authentication successful',
+      'Network latency warning',
+      'Disk space low'
+    ];
+
+    for (let i = 0; i < 8; i++) {
+      const logTime = new Date(baseDate.getTime() - (i * 2 * 60 * 60 * 1000));
+      const severity = severities[Math.floor(Math.random() * severities.length)];
+      const message = messages[Math.floor(Math.random() * messages.length)];
+      logs.push({
+        machineId,
+        timestamp: logTime.toISOString().replace('T', ' ').slice(0, 19),
+        severity,
+        message
+      });
+    }
+
+    const sortedLogs = logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    console.log(`Sorted logs for Machine ${machineId}:`, sortedLogs);
+    return sortedLogs;
+  },
+
+  generateSnapshots(machineId, lastLogin) {
+    const snapshots = [];
+    const baseDate = lastLogin && !isNaN(Date.parse(lastLogin)) ? new Date(lastLogin) : new Date('2025-09-04T16:53:00');
+    const statuses = ['completed', 'pending', 'failed'];
+
+    for (let i = 0; i < 5; i++) {
+      const snapshotTime = new Date(baseDate.getTime() - (i * 24 * 60 * 60 * 1000));
+      const status = statuses[Math.floor(Math.random() * statuses.length)];
+      snapshots.push({
+        machineId,
+        snapshotId: `snap-${machineId}-${Math.random().toString(36).substring(2, 10)}`,
+        creationTime: snapshotTime.toISOString().replace('T', ' ').slice(0, 19),
+        size: `${Math.floor(Math.random() * 50) + 10} GB`,
+        status
+      });
+    }
+
+    const sortedSnapshots = snapshots.sort((a, b) => new Date(b.creationTime) - new Date(a.creationTime));
+    console.log(`Sorted snapshots for Machine ${machineId}:`, sortedSnapshots);
+    return sortedSnapshots;
+  },
+
+  formatDuration(ms) {
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours > 0 ? hours + 'h ' : ''}${minutes}m`;
+  },
+
+  renderOverview(machines) {
+    const machineHTML = machines.map(machine => {
+      const statusClass = machine.status ? `status-${machine.status.toLowerCase()}` : '';
+      const machineId = machine.info?.id || `machine-${machine.id}`;
+      const lastActive = machine.info?.date || machine.lastLogin;
+      
+      return `
+        <tr>
+          <td>${machineId}</td>
+          <td>${machine.os}</td>
+          <td class="status-cell">
+            <span class="status-badge ${statusClass}">${machine.status || 'unknown'}</span>
+          </td>
+          <td>${lastActive}</td>
+          <td>${machine.ip}</td>
+          <td>${machine.location}</td>
+          <td>${machine.loginCount}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="action-button power-button" data-machine-id="${machine.id}" data-machine-status="${machine.status || 'unknown'}">Power</button>
+              <button class="action-button terminal-button" data-machine-id="${machine.id}" ${machine.status !== 'started' ? 'disabled' : ''}>Terminal</button>
+              <button class="action-button toggle-specs" data-machine-id="${machine.id}">Hide Specs</button>
+            </div>
+          </td>
+        </tr>
+        <tr class="machine-specs" id="overview-specs-${machine.id}" style="display: none;">
+          <td colspan="8">
+            <table class="details-table">
+              <tbody>
+                ${this.createTableRow('Status', machine.status || 'unknown')}
+                ${this.createTableRow('Architecture', machine.arch)}
+                ${this.createTableRow('Processor', machine.processor)}
+                ${this.createTableRow('Cores', machine.cores)}
+                ${this.createTableRow('Logical Processors', machine.logicalProcessors)}
+                ${machine.info?.id ? this.createTableRow('Machine ID', machine.info.id) : ''}
+                ${machine.info?.date ? this.createTableRow('Last Active', machine.info.date) : ''}
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    this.elements.overviewMachines.innerHTML = machineHTML;
+    this.setupActionButtons();
+    this.setupToggleButtons('overview');
+
+    const chartData = {
+      labels: machines.map(machine => `Machine ${machine.id} (${machine.os})`),
+      datasets: [{
+        label: 'Login Count',
+        data: machines.map(machine => machine.loginCount),
+        backgroundColor: '#ec7211',
+        borderColor: '#d95f0e',
+        borderWidth: 1
+      }]
+    };
+
+    new Chart(this.elements.sharedElements.machineState.overviewActivityChart, {
+      type: 'bar',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: '#d5dbdb' },
+            title: { display: true, text: 'Number of Logins', color: '#16191f', font: { size: 14 } },
+            ticks: { color: '#16191f' }
+          },
+          x: {
+            grid: { display: false },
+            title: { display: true, text: 'Machines', color: '#16191f', font: { size: 14 } },
+            ticks: { color: '#16191f' }
+          }
+        },
+        plugins: {
+          legend: { display: true, position: 'top', labels: { color: '#16191f', font: { size: 12 } } },
+          title: { display: true, text: 'Machine Login Activity', color: '#16191f', font: { size: 16 } }
+        }
+      }
+    });
+  },
+
+  renderMachines(machines) {
+    const machineHTML = machines.map(machine => {
+      const statusClass = machine.status ? `status-${machine.status.toLowerCase()}` : '';
+      const machineId = machine.info?.id || `machine-${machine.id}`;
+      const lastActive = machine.info?.date || machine.lastLogin;
+      
+      return `
+        <tr>
+          <td>${machineId}</td>
+          <td>${machine.os}</td>
+          <td class="status-cell">
+            <span class="status-badge ${statusClass}">${machine.status || 'unknown'}</span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="action-button power-button" data-machine-id="${machine.id}" data-machine-status="${machine.status || 'unknown'}">Power</button>
+              <button class="action-button terminal-button" data-machine-id="${machine.id}" ${machine.status !== 'started' ? 'disabled' : ''}>Terminal</button>
+              <button class="action-button toggle-specs" data-machine-id="${machine.id}">Hide Specs</button>
+            </div>
+          </td>
+        </tr>
+        <tr class="machine-specs" id="machines-specs-${machine.id}">
+          <td colspan="4">
+            <table class="details-table">
+              <tbody>
+                ${this.createTableRow('Status', machine.status || 'unknown')}
+                ${this.createTableRow('Architecture', machine.arch)}
+                ${this.createTableRow('Processor', machine.processor)}
+                ${this.createTableRow('Cores', machine.cores)}
+                ${this.createTableRow('Logical Processors', machine.logicalProcessors)}
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    this.elements.machines.list.innerHTML = machineHTML;
+    this.setupActionButtons();
+    this.setupToggleButtons('machines');
+
+    document.querySelectorAll('#machines .toggle-specs').forEach(button => {
+      const machineId = button.dataset.machineId;
+      const specsRow = document.getElementById(`machines-specs-${machineId}`);
+      if (specsRow) {
+        specsRow.style.display = 'table-row';
+      }
+    });
+  },
+
+  renderSpecs(machines) {
+    const specsHTML = machines.map(machine => `
+      <tr>
+        <td>Machine ${machine.id}</td>
+        <td>${machine.arch}</td>
+        <td>${machine.processor}</td>
+        <td>${machine.cores}</td>
+        <td>${machine.logicalProcessors}</td>
+      </tr>
+    `).join('');
+
+    this.elements.machines.specs.list.innerHTML = specsHTML;
+  },
+
+  renderSystem(machines) {
+    const systemHTML = machines.map(machine => `
+      <tr>
+        <td>Machine ${machine.id}</td>
+        <td>${machine.os}</td>
+      </tr>
+    `).join('');
+
+    this.elements.machines.system.list.innerHTML = systemHTML;
+  },
+
+  renderActivity(machines) {
+    const activityHTML = machines.map(machine => `
+      <tr>
+        <td>Machine ${machine.id}</td>
+        <td>${machine.lastLogin}</td>
+        <td>${machine.ip}</td>
+        <td>${machine.loginCount}</td>
+      </tr>
+    `).join('');
+
+    this.elements.activity.list.innerHTML = activityHTML;
+
+    const filterHTML = `
+      <option value="all">All Machines</option>
+      ${machines.map(machine => `<option value="${machine.id}">Machine ${machine.id}</option>`).join('')}
+    `;
+    this.elements.activity.timeline.filter.innerHTML = filterHTML;
+
+    this.elements.activity.timeline.filter.addEventListener('change', () => {
+      console.log(`Timeline filter changed to: ${this.elements.activity.timeline.filter.value}`);
+      this.renderTimeline(machines);
+    });
+
+    this.renderTimeline(machines);
+  },
+
+  renderTimeline(machines) {
+    const filterValue = this.elements.activity.timeline.filter.value;
+    console.log(`Rendering timeline with filter: ${filterValue}`);
+    const filteredHistory = filterValue === 'all'
+      ? machines.flatMap(machine => machine.loginHistory)
+      : machines.find(machine => machine.id === parseInt(filterValue))?.loginHistory || [];
+
+    console.log('Filtered login history:', filteredHistory);
+
+    if (filteredHistory.length === 0) {
+      this.elements.activity.timeline.container.innerHTML = '<div class="timeline-empty">No login events found</div>';
+      return;
+    }
+
+    const timelineHTML = filteredHistory.map(event => `
+      <div class="timeline-item">
+        <div class="timeline-icon ${event.eventType.toLowerCase()}${event.status === 'Failed' ? ' failed' : ''}"></div>
+        <div class="timeline-content">
+          <p><strong>Machine ID:</strong> Machine ${event.machineId}</p>
+          <p><strong>Event:</strong> ${event.eventType} (${event.status})</p>
+          <p><strong>Timestamp:</strong> ${event.timestamp}</p>
+          <p><strong>IP Address:</strong> ${event.ip}</p>
+          <p><strong>Login Count:</strong> ${event.loginCount}</p>
+          ${event.sessionDuration ? `<p><strong>Session Duration:</strong> ${event.sessionDuration}</p>` : ''}
+        </div>
+      </div>
+    `).join('');
+
+    this.elements.activity.timeline.container.innerHTML = timelineHTML;
+  },
+
+  renderLogs(machines) {
+    const filterHTML = `
+      <option value="all">All Machines</option>
+      ${machines.map(machine => `<option value="${machine.id}">Machine ${machine.id}</option>`).join('')}
+    `;
+    this.elements.logs.filter.innerHTML = filterHTML;
+
+    this.elements.logs.filter.addEventListener('change', () => {
+      console.log(`Logs filter changed to: ${this.elements.logs.filter.value}`);
+      this.renderLogs(machines);
+    });
+
+    const filterValue = this.elements.logs.filter.value;
+    console.log(`Rendering logs with filter: ${filterValue}`);
+    const filteredLogs = filterValue === 'all'
+      ? machines.flatMap(machine => machine.logs)
+      : machines.find(machine => machine.id === parseInt(filterValue))?.logs || [];
+
+    console.log('Filtered logs:', filteredLogs);
+
+    const logsHTML = filteredLogs.length > 0 ? filteredLogs.map(log => `
+      <tr>
+        <td>Machine ${log.machineId}</td>
+        <td>${log.timestamp}</td>
+        <td class="severity-${log.severity.toLowerCase()}">${log.severity}</td>
+        <td>${log.message}</td>
+      </tr>
+    `).join('') : `
+      <tr>
+        <td colspan="4" class="timeline-empty">No logs found</td>
+      </tr>
+    `;
+
+    this.elements.logs.list.innerHTML = logsHTML;
+  },
+
+  renderSnapshots(machines) {
+    const filterHTML = `
+      <option value="all">All Machines</option>
+      ${machines.map(machine => `<option value="${machine.id}">Machine ${machine.id}</option>`).join('')}
+    `;
+    this.elements.snapshots.filter.innerHTML = filterHTML;
+
+    this.elements.snapshots.filter.addEventListener('change', () => {
+      console.log(`Snapshots filter changed to: ${this.elements.snapshots.filter.value}`);
+      this.renderSnapshots(machines);
+    });
+
+    const filterValue = this.elements.snapshots.filter.value;
+    console.log(`Rendering snapshots with filter: ${filterValue}`);
+    const filteredSnapshots = filterValue === 'all'
+      ? machines.flatMap(machine => machine.snapshots)
+      : machines.find(machine => machine.id === parseInt(filterValue))?.snapshots || [];
+
+    console.log('Filtered snapshots:', filteredSnapshots);
+
+    const snapshotsHTML = filteredSnapshots.length > 0 ? filteredSnapshots.map(snapshot => `
+      <tr>
+        <td>Machine ${snapshot.machineId}</td>
+        <td>${snapshot.snapshotId}</td>
+        <td>${snapshot.creationTime}</td>
+        <td>${snapshot.size}</td>
+        <td class="status-cell">
+          <span class="status-badge status-${snapshot.status.toLowerCase()}">${snapshot.status}</span>
+        </td>
+        <td>
+          <div class="action-buttons">
+            <button class="action-button restore" data-snapshot-id="${snapshot.snapshotId}" ${snapshot.status !== 'completed' ? 'disabled' : ''}>Restore</button>
+            <button class="action-button delete" data-snapshot-id="${snapshot.snapshotId}">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('') : `
+      <tr>
+        <td colspan="6" class="timeline-empty">No snapshots found</td>
+      </tr>
+    `;
+
+    this.elements.snapshots.list.innerHTML = snapshotsHTML;
+    this.setupSnapshotButtons();
+  },
+
+  createTableRow(label, value, className = '') {
+
+    const colorClasses = [
+      'status-started',    
+      'status-stopped',    
+      'status-warning',    
+      'status-critical',   
+      'status-error',      
+      'status-unknown',    
+      'status-info',       
+      'status-disabled'    
+    ];
+    
+    const labels = [
+      'status', 'architecture', 'processor', 'cores', 
+      'logical processors', 'machine id', 'last active'
+    ];
+    
+    const labelIndex = labels.indexOf(label.toLowerCase().trim());
+    const colorClass = colorClasses[Math.min(labelIndex, colorClasses.length - 1)] || '';
+    
+    const formattedValue = value 
+      ? `<span class="status-badge ${colorClass}">${value}</span>`
+      : 'N/A';
+      
+    return `
+      <tr${className ? ` class="${className}"` : ''}>
+        <th>${label}</th>
+        <td>${formattedValue}</td>
+      </tr>`;
+  },
+
+  setupToggleButtons(sectionPrefix) {
+    document.querySelectorAll(`#${sectionPrefix} .toggle-specs`).forEach(button => {
+      const machineId = String(button.dataset.machineId);
+      const specsRow = document.getElementById(`${sectionPrefix}-specs-${machineId}`);
+      
+      if (sectionPrefix === 'machines') {
+
+        if (specsRow) specsRow.style.display = 'table-row';
+        button.textContent = 'Hide Specs';
+      } else {
+        if (specsRow) specsRow.style.display = 'none';
+        button.textContent = 'Show Specs';
+      }
+      
+      button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (specsRow) {
+          const isHidden = specsRow.style.display === 'none';
+          specsRow.style.display = isHidden ? 'table-row' : 'none';
+          button.textContent = isHidden ? 'Hide Specs' : 'Show Specs';
+        }
+      });
+    });
+  },
+
+  setupActionButtons() {
+    document.querySelectorAll('.power-button').forEach(button => {
+      button.addEventListener('click', () => {
+        const machineId = String(button.dataset.machineId);
+        this.currentMachineId = machineId;
+        const row = button.closest('tr');
+        if (!row) {
+          console.error(`No row found for machineId: ${machineId}`);
+          return;
+        }
+        const machine = row.querySelector('td:first-child').textContent || `Machine ${machineId}`;
+        console.log(`Power button clicked for ${machine}, powerState: ${row.querySelector('td:nth-child(3)').textContent.toLowerCase()}`);
+        this.elements.sharedElements.modal.power.title.textContent = `Manage Power for ${machine}`;
+        this.elements.sharedElements.modal.power.status.textContent = '';
+        this.elements.sharedElements.modal.power.status.classList.remove('error');
+        this.elements.sharedElements.modal.power.boot.disabled = row.querySelector('td:nth-child(3)').textContent.toLowerCase() === 'running';
+        this.elements.sharedElements.modal.power.reboot.disabled = row.querySelector('td:nth-child(3)').textContent.toLowerCase() !== 'running';
+        this.elements.sharedElements.modal.power.shutdown.disabled = row.querySelector('td:nth-child(3)').textContent.toLowerCase() !== 'running';
+        this.elements.sharedElements.modal.power.container.style.display = 'flex';
+        this.elements.sharedElements.modal.terminal.container.style.display = 'none';
+        this.closeAllActionMenus();
+      });
+    });
+    document.querySelectorAll('.terminal-button').forEach(button => {
+      button.addEventListener('click', () => {
+        if (button.dataset.disabled === 'true') return;
+        const machineId = String(button.dataset.machineId);
+        this.currentMachineId = machineId;
+        const row = button.closest('tr');
+        if (!row) {
+          console.error(`No row found for machineId: ${machineId}`);
+          return;
+        }
+        const machine = row.querySelector('td:first-child').textContent || `Machine ${machineId}`;
+        console.log(`Terminal button clicked for ${machine}`);
+        this.elements.sharedElements.modal.terminal.title.textContent = `Terminal - ${machine}`;
+        this.terminalHistory[machineId] = this.terminalHistory[machineId] || [`[ec2-user@machine${machineId} ~]$ `];
+        this.terminalCommandIndex[machineId] = this.terminalHistory[machineId].length;
+        this.elements.sharedElements.modal.terminal.output.textContent = this.terminalHistory[machineId].join('');
+        this.elements.sharedElements.modal.terminal.input.value = '';
+        this.elements.sharedElements.modal.terminal.container.style.display = 'flex';
+        this.elements.sharedElements.modal.power.container.style.display = 'none';
+        this.elements.sharedElements.modal.terminal.input.focus();
+        this.elements.sharedElements.modal.terminal.output.scrollTop = this.elements.sharedElements.modal.terminal.output.scrollHeight;
+        this.setupCursor();
+        this.closeAllActionMenus();
+      });
+    });
+  },
+
+  setupActionMenus() {
+    document.querySelectorAll('.action-menu-button').forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const machineId = button.dataset.machineId;
+        const menu = document.getElementById(`action-menu-${machineId}`);
+        const isActive = menu.classList.contains('active');
+        this.closeAllActionMenus();
+        if (!isActive) {
+          menu.classList.add('active');
+          console.log(`Action menu opened for Machine ${machineId}`);
+        }
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.action-menu-container')) {
+        this.closeAllActionMenus();
+      }
+    });
+  },
+
+  closeAllActionMenus() {
+    document.querySelectorAll('.action-menu').forEach(menu => {
+      menu.classList.remove('active');
+    });
+  },
+
+  setupSnapshotButtons() {
+    document.querySelectorAll('.snapshots-table .action-button.restore').forEach(button => {
+      button.addEventListener('click', () => {
+        const snapshotId = button.dataset.snapshotId;
+        console.log(`Restore snapshot ${snapshotId}`);
+        this.handleSnapshotAction('restore', snapshotId);
+      });
+    });
+    document.querySelectorAll('.snapshots-table .action-button.delete').forEach(button => {
+      button.addEventListener('click', () => {
+        const snapshotId = button.dataset.snapshotId;
+        console.log(`Delete snapshot ${snapshotId}`);
+        this.handleSnapshotAction('delete', snapshotId);
+      });
+    });
+  },
+
+  async handleSnapshotAction(action, snapshotId) {
+    try {
+      const response = await fetch(`http://localhost:8080/snapshot/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ snapshotId })
+      });
+      console.log(`Snapshot ${action} status: ${response.status}`);
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || `${action} failed with status: ${response.status}`);
+
+      alert(`${action.charAt(0).toUpperCase() + action.slice(1)} successful for snapshot ${snapshotId}`);
+      this.loadMachineData();
+    } catch (error) {
+      console.error(`Snapshot ${action} error:`, error);
+      alert(`Error: ${error.message}`);
+    }
+  },
+
+  async handleAction(action) {
+    const machineId = this.currentMachineId;
+    if (!machineId) return;
+
+    const statusDiv = this.elements.sharedElements.modal.power.status;
+    const buttons = this.elements.sharedElements.modal.power.container.querySelectorAll('.modal-button:not(.modal-close)');
+    buttons.forEach(button => button.disabled = true);
+    statusDiv.textContent = `${action.charAt(0).toUpperCase() + action.slice(1)} initiated...`;
+    statusDiv.classList.remove('error');
+
+    try {
+      const response = await fetch(`http://localhost:8080/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ machineId })
+      });
+      console.log(`Action ${action} status: ${response.status}`);
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || `${action} failed with status: ${response.status}`);
+
+      statusDiv.textContent = result.message || `${action.charAt(0).toUpperCase() + action.slice(1)} successful`;
+      if (result.powerState) {
+        const updatePowerState = (tbodyId, specsPrefix) => {
+          const row = Array.from(document.querySelector(`#${tbodyId}`).querySelectorAll('tr')).find(tr => 
+            tr.querySelector(`.power-button[data-machine-id="${machineId}"]`) || 
+            tr.querySelector(`.action-menu-button[data-machine-id="${machineId}"]`)
+          );
+          if (row) {
+            const powerStateCell = row.querySelector('td:nth-child(3)');
+            powerStateCell.textContent = result.powerState;
+            powerStateCell.className = `power-state-${result.powerState.toLowerCase()}`;
+            const isRunning = result.powerState.toLowerCase() === 'running';
+            const terminalButton = row.querySelector(`.terminal-button[data-machine-id="${machineId}"]`);
+            if (terminalButton) {
+              if (tbodyId === 'overview-machines') {
+                terminalButton.disabled = !isRunning;
+              } else {
+                terminalButton.dataset.disabled = isRunning ? '' : 'true';
+              }
+              console.log(`Terminal button for machineId ${machineId} set to disabled: ${terminalButton.disabled || terminalButton.dataset.disabled}`);
+            }
+          }
+        };
+        updatePowerState('overview-machines', 'overview');
+        updatePowerState('machines-list', 'machines');
+        this.elements.sharedElements.modal.power.boot.disabled = result.powerState.toLowerCase() === 'running';
+        this.elements.sharedElements.modal.power.reboot.disabled = result.powerState.toLowerCase() !== 'running';
+        this.elements.sharedElements.modal.power.shutdown.disabled = result.powerState.toLowerCase() !== 'running';
+      }
+    } catch (error) {
+      statusDiv.textContent = `Error: ${error.message}`;
+      statusDiv.classList.add('error');
+    } finally {
+      buttons.forEach(button => button.disabled = false);
+    }
+    this.elements.sharedElements.machineState.loadingOverlay.style.display = 'flex';
+  },
+
+  hideLoadingOverlay() {
+    this.elements.sharedElements.machineState.loadingOverlay.style.display = 'none';
+  },
+
+  handleError(error, startTime) {
+    console.error('Error loading data:', error.message);
+    const elapsedTime = Date.now() - startTime;
+    const remainingTime = this.minLoadingDuration - elapsedTime;
+    setTimeout(() => {
+      this.hideLoadingOverlay();
+      this.elements.sharedElements.machineState.errorNote.innerHTML = `Error: Failed to load machine data. ${error.message}`;
+    }, Math.max(0, remainingTime));
+  }
+};
+
+App.initialize();

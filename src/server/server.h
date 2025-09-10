@@ -1,16 +1,20 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+// Common
 #include <stddef.h>
 #include <stdint.h>
 
 #ifdef _WIN32
-#include <winsock2.h>
+// WINDOWS
+    #include <winsock2.h>
 #else
-#include <sys/socket.h>
-#include <netinet/in.h>
+// UNIX-LIKE
+    #include <sys/socket.h>
+    #include <netinet/in.h>
 #endif
 
+// Constants
 #define MAX_ROUTES 10
 
 typedef struct Route Route;

@@ -1,7 +1,16 @@
-#include "routes.h"
+// Common
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
+
+// WINDOWS
+#ifdef _WIN32
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
+#endif
+
+// Imports
+#include "routes.h"
 
 void addRoute(Server* server, char* path, RouteHandler handler) {
     if (server->routeCount >= MAX_ROUTES) {
