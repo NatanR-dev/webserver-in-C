@@ -523,7 +523,7 @@ const App = {
             <div class="action-buttons">
               <button class="action-button power-button" data-machine-id="${machine.id}" data-machine-status="${machine.status || 'unknown'}">Power</button>
               <button class="action-button terminal-button" data-machine-id="${machine.id}" ${machine.status !== 'started' ? 'disabled' : ''}>Terminal</button>
-              <button class="action-button toggle-specs" data-machine-id="${machine.id}">Show Specs</button>
+              <button class="action-button toggle-specs" data-machine-id="${machine.id}">Hide Specs</button>
             </div>
           </td>
         </tr>
@@ -601,17 +601,14 @@ const App = {
             <span class="status-badge ${statusClass}">${machine.status || 'unknown'}</span>
           </td>
           <td>
-            <div class="action-menu-container">
-              <button class="action-menu-button" data-machine-id="${machine.id}">⋮</button>
-              <div class="action-menu" id="action-menu-${machine.id}">
-                <div class="action-menu-item power-button" data-machine-id="${machine.id}" data-machine-status="${machine.status || 'unknown'}">Power</div>
-                <div class="action-menu-item terminal-button" data-machine-id="${machine.id}" ${machine.status !== 'started' ? 'data-disabled="true"' : ''}>Terminal</div>
-                <div class="action-menu-item toggle-specs" data-machine-id="${machine.id}">Show Specs</div>
-              </div>
+            <div class="action-buttons">
+              <button class="action-button power-button" data-machine-id="${machine.id}" data-machine-status="${machine.status || 'unknown'}">Power</button>
+              <button class="action-button terminal-button" data-machine-id="${machine.id}" ${machine.status !== 'started' ? 'disabled' : ''}>Terminal</button>
+              <button class="action-button toggle-specs" data-machine-id="${machine.id}">Hide Specs</button>
             </div>
           </td>
         </tr>
-        <tr class="machine-specs" id="machines-specs-${machine.id}" style="display: none;">
+        <tr class="machine-specs" id="machines-specs-${machine.id}">
           <td colspan="4">
             <table class="details-table">
               <tbody>
@@ -630,7 +627,14 @@ const App = {
     this.elements.machines.list.innerHTML = machineHTML;
     this.setupActionButtons();
     this.setupToggleButtons('machines');
-    this.setupActionMenus();
+
+    document.querySelectorAll('#machines .toggle-specs').forEach(button => {
+      const machineId = button.dataset.machineId;
+      const specsRow = document.getElementById(`machines-specs-${machineId}`);
+      if (specsRow) {
+        specsRow.style.display = 'table-row';
+      }
+    });
   },
 
   renderSpecs(machines) {
@@ -834,8 +838,11 @@ const App = {
       button.addEventListener('click', () => {
         const machineId = String(button.dataset.machineId);
         const specsRow = document.getElementById(`${sectionPrefix}-specs-${machineId}`);
-        specsRow.style.display = specsRow.style.display === 'none' ? 'table-row' : 'none';
-        button.textContent = specsRow.style.display === 'none' ? 'Show Specs' : 'Hide Specs';
+        if (specsRow) {
+          const isVisible = specsRow.style.display !== 'none';
+          specsRow.style.display = isVisible ? 'none' : 'table-row';
+          button.textContent = isVisible ? 'Show Specs' : 'Hide Specs';
+        }
       });
     });
   },
