@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdlib.h>
 
-// WINDOWS
 #ifdef _WIN32
-    // Windows includes
+    // Windows 
     #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
     #include <winsock2.h>
@@ -32,48 +32,59 @@
 // Imports
 #include "handlers.h"
 #include "../utils/utils.h"
+#include "../utils/json.h"
+#include "../utils/http.h"
 
 void rootPathHandler(Server* server, int clientConnection) {
-    int size = snprintf(NULL, 0, "{\"message\": \"Welcome to low-level C API\", \"version\": \"1.0\", \"available_routes\": [");
+
+    char routes[8192] = "[";
+    size_t offset = 1; 
+    
     for (int i = 0; i < server->routeCount; i++) {
-        char escapedPath[1024];
-        jsonEscapeString(server->routes[i].path, escapedPath, sizeof(escapedPath));
-        size += snprintf(NULL, 0, "{\"path\": \"%s\", \"link\": \"http://localhost:8080%s\"}", escapedPath, escapedPath);
-        if (i < server->routeCount - 1) {
-            size += snprintf(NULL, 0, ", ");
+
+        char fullUrl[2048];
+        snprintf(fullUrl, sizeof(fullUrl), "http://localhost:8080%s", 
+                server->routes[i].path);
+        
+        char routeObj[4096];
+        createJsonObject(routeObj, sizeof(routeObj), 2,
+            "path", server->routes[i].path,
+            "link", fullUrl);
+        
+        if (i > 0) {
+            offset += snprintf(routes + offset, sizeof(routes) - offset, ",\n        ");
+        } else {
+            offset += snprintf(routes + offset, sizeof(routes) - offset, "\n        ");
         }
+        
+        offset += snprintf(routes + offset, sizeof(routes) - offset, "%s", routeObj);
     }
-    size += snprintf(NULL, 0, "]}");
-    size++; 
-
-    char* json = malloc(size);
-    if (json == NULL) {
-        return;
-    }
-
-    int offset = snprintf(json, size, "{\"message\": \"Welcome to low-level C API\", \"version\": \"1.0\", \"available_routes\": [");
-    for (int i = 0; i < server->routeCount; i++) {
-        char escapedPath[1024];
-        jsonEscapeString(server->routes[i].path, escapedPath, sizeof(escapedPath));
-        offset += snprintf(json + offset, size - offset, "{\"path\": \"%s\", \"link\": \"http://localhost:8080%s\"}", escapedPath, escapedPath);
-        if (i < server->routeCount - 1) {
-            offset += snprintf(json + offset, size - offset, ", ");
-        }
-    }
-    snprintf(json + offset, size - offset, "]}");
-
+    
+    snprintf(routes + offset, sizeof(routes) - offset, "\n    ]");
+    
+    char json[16384];
+    snprintf(json, sizeof(json),
+        "{\n"
+        "   \"message\": \"Welcome to low-level C API\",\n"
+        "   \"version\": \"1.0\",\n"
+        "   \"available_routes\": %s\n"
+        "}",
+        routes);
+    
     sendJsonResponse(clientConnection, json);
-    free(json);
 }
 
 void apiHandler(Server* server, int clientConnection) {
-    (void)server;  
-    sendJsonResponse(clientConnection, "{\"message\": \"Hello from my API!\", \"port\": 8080}");
+    (void)server;
+    char json[256];
+    createJsonObject(json, sizeof(json), 2,
+            "message", "Hello from my API!",
+            "port", "8080");
+    sendJsonResponse(clientConnection, json);
 }
 
 void machinesHandler(Server* server, int clientConnection) {
     (void)server;  
-    char response[BUFFER_SIZE];
     char machineId[33] = {0};
     char ip[46] = "127.0.0.1";  
     
@@ -87,31 +98,30 @@ void machinesHandler(Server* server, int clientConnection) {
     struct tm *tm_info = localtime(&now);
     char dateTime[20];
     strftime(dateTime, sizeof(dateTime), "%Y-%m-%d %H:%M:%S", tm_info);
+    char json[1024];
+    createJsonObject(json, sizeof(json), 4,
+            "status", "Started",
+            "id", machineId,
+            "ip", ip,
+            "date", dateTime);
     
-    snprintf(response, sizeof(response),
-             "{\"status\":\"started\",\"info\":"
-             "{\"id\":\"%s\","
-             "\"ip\":\"%s\","
-             "\"date\":\"%s\"}}",
-             machineId, ip, dateTime);
-    
-    sendJsonResponse(clientConnection, response);
+    sendJsonResponse(clientConnection, json);
 }
 
 void osHandler(Server* server, int clientConnection) {
     (void)server;  
-    char json[BUFFER_SIZE];
-
+    char osName[32] = "Unknown";
+    
     #ifdef _WIN32
-        snprintf(json, sizeof(json), "{\"os\": \"Windows\"}");
+        strncpy(osName, "Windows", sizeof(osName));
     #elif defined(__linux__)
-        snprintf(json, sizeof(json), "{\"os\": \"Linux\"}");
+        strncpy(osName, "Linux", sizeof(osName));
     #elif defined(__APPLE__)
-        snprintf(json, sizeof(json), "{\"os\": \"macOS\"}");
-    #else
-        snprintf(json, sizeof(json), "{\"os\": \"Unknown\"}");
+        strncpy(osName, "macOS", sizeof(osName));
     #endif
-
+    
+    char json[256];
+    createJsonObject(json, sizeof(json), 1, "os", osName);
     sendJsonResponse(clientConnection, json);
 }
 
@@ -128,8 +138,8 @@ void systemInfoHandler(Server* server, int clientConnection) {
         SYSTEM_INFO sysInfo;
         GetSystemInfo(&sysInfo);
         int arch = sysInfo.wProcessorArchitecture;
-        char* architectureName;
-        char* processorArchitecture;
+        const char* architectureName = "Unknown";
+        const char* processorArchitecture = "Unknown";
         
         switch (arch) {
             case 0:
@@ -139,10 +149,6 @@ void systemInfoHandler(Server* server, int clientConnection) {
             case 9:
                 architectureName = "AMD64";
                 processorArchitecture = "x64";
-                break;
-            default:
-                architectureName = "Unknown";
-                processorArchitecture = "Unknown";
                 break;
         }
 
@@ -168,64 +174,47 @@ void systemInfoHandler(Server* server, int clientConnection) {
             }
         }
 
-        char escapedProcessorArchitecture[256];
-        jsonEscapeString(processorArchitecture, escapedProcessorArchitecture, sizeof(escapedProcessorArchitecture));
+        char coresStr[16], logicalStr[16];
+        snprintf(coresStr, sizeof(coresStr), "%u", numberOfCores);
+        snprintf(logicalStr, sizeof(logicalStr), "%u", numberOfLogicalProcessors);
         
-        char escapedArchitectureName[256];
-        jsonEscapeString(architectureName, escapedArchitectureName, sizeof(escapedArchitectureName));
-        
-        snprintf(json, sizeof(json), 
-            "{\"os\": \"Windows\", "
-            "\"arch\": \"%s\", "
-            "\"processorArchitecture\": \"%s\", "
-            "\"numberOfCores\": \"%u\", "
-            "\"numberOfLogicalProcessors\": \"%u\", "
-            "\"processorCount\": \"%u\", "
-            "\"datetime\": \"%s\"}", 
-            escapedArchitectureName, 
-            escapedProcessorArchitecture, 
-            numberOfCores, 
-            numberOfLogicalProcessors, 
-            numberOfLogicalProcessors, 
-            datetime);
+        createJsonObject(json, sizeof(json), 7,
+            "os", "Windows",
+            "arch", architectureName,
+            "processorArchitecture", processorArchitecture,
+            "numberOfCores", coresStr,
+            "numberOfLogicalProcessors", logicalStr,
+            "processorCount", logicalStr,  
+            "datetime", datetime);
             
     #elif defined(__linux__) || defined(__APPLE__)
         struct utsname uname_data;
         uname(&uname_data);
         unsigned int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
 
-        char escapedSysname[512], escapedRelease[512], escapedVersion[512], escapedMachine[512];
-        jsonEscapeString(uname_data.sysname, escapedSysname, sizeof(escapedSysname));
-        jsonEscapeString(uname_data.release, escapedRelease, sizeof(escapedRelease));
-        jsonEscapeString(uname_data.version, escapedVersion, sizeof(escapedVersion));
-        jsonEscapeString(uname_data.machine, escapedMachine, sizeof(escapedMachine));
-
-        const char* os_name = 
+        const char* os_name = "Unknown";
         #ifdef __linux__
-            "Linux";
+            os_name = "Linux";
         #elif defined(__APPLE__)
-            "macOS";
+            os_name = "macOS";
         #endif
 
-        snprintf(json, sizeof(json), 
-            "{\"os\": \"%s\", "
-            "\"sysname\": \"%s\", "
-            "\"release\": \"%s\", "
-            "\"version\": \"%s\", "
-            "\"machine\": \"%s\", "
-            "\"numberOfCores\": \"%u\", "
-            "\"numberOfLogicalProcessors\": \"%u\", "
-            "\"datetime\": \"%s\"}", 
-            os_name,
-            escapedSysname, 
-            escapedRelease, 
-            escapedVersion, 
-            escapedMachine, 
-            num_cores, 
-            num_cores, 
-            datetime);
+        char coresStr[16];
+        snprintf(coresStr, sizeof(coresStr), "%u", num_cores);
+
+        createJsonObject(json, sizeof(json), 8,
+            "os", os_name,
+            "sysname", uname_data.sysname,
+            "release", uname_data.release,
+            "version", uname_data.version,
+            "machine", uname_data.machine,
+            "numberOfCores", coresStr,
+            "numberOfLogicalProcessors", coresStr,
+            "datetime", datetime);
     #else
-        snprintf(json, sizeof(json), "{\"os\": \"Unknown\", \"datetime\": \"%s\"}", datetime);
+        createJsonObject(json, sizeof(json), 2,
+            "os", "Unknown",
+            "datetime", datetime);
     #endif
 
     sendJsonResponse(clientConnection, json);

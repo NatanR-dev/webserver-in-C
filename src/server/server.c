@@ -29,7 +29,6 @@
 // Imports
 #include "server.h"
 #include "../routes/routes.h"
-#include "../utils/utils.h"
 
 // Constants
 #define PORT 8080

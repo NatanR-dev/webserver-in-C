@@ -30,7 +30,7 @@
 #include "server/server.h"
 #include "routes/routes.h"
 #include "handlers/handlers.h"
-#include "utils/utils.h"
+#include "utils/http.h"  
 
 // Constants
 #define BUFFER_SIZE 4096
@@ -75,7 +75,7 @@ int handleRequest(Server* server, int clientConnection, char* request) {
 
     char notFoundMessage[1024];
     snprintf(notFoundMessage, sizeof(notFoundMessage), 
-             "{\"error\": \"Route not found\", \"path\": \"%s\"}", path);
+        "{\"error\": \"Route not found\", \"path\": \"%s\"}", path);
     sendErrorResponse(clientConnection, 404, "Not Found", notFoundMessage);
     return 0;
 }
