@@ -1,10 +1,11 @@
 #include "network.h"
 #include <string.h>
 
-#ifdef _WIN32
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
-    #include <winsock2.h>
+// Platform includes
+#include "../platform/platform.h"
+
+// Platform-specific includes
+#ifdef PLATFORM_WINDOWS
     #include <iphlpapi.h>
     #include <ws2tcpip.h>
 #else
@@ -12,62 +13,58 @@
     #include <netdb.h>
     #include <net/if.h>
     #include <arpa/inet.h>
-    #include <sys/socket.h>
-    #include <sys/types.h>
-    #include <unistd.h>
     #include <netinet/in.h>
 #endif
 
 int getLocalIP(char* ip, size_t ipSize) {
-    #ifdef _WIN32
-        // Windows implementation
-        PIP_ADAPTER_INFO pAdapterInfo;
-        PIP_ADAPTER_INFO pAdapter = NULL;
+    #ifdef PLATFORM_WINDOWS
+        PIP_ADAPTER_ADDRESSES pAddresses = NULL;
+        ULONG outBufLen = 0;
         DWORD dwRetVal = 0;
-        ULONG ulOutBufLen = sizeof(IP_ADAPTER_INFO);
         
-        pAdapterInfo = (IP_ADAPTER_INFO *)malloc(sizeof(IP_ADAPTER_INFO));
-        if (pAdapterInfo == NULL) {
+        GetAdaptersAddresses(AF_INET, 0, NULL, NULL, &outBufLen);
+        pAddresses = (PIP_ADAPTER_ADDRESSES)malloc(outBufLen);
+        
+        if (pAddresses == NULL) {
             return 1;
         }
         
-        if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW) {
-            free(pAdapterInfo);
-            pAdapterInfo = (IP_ADAPTER_INFO *)malloc(ulOutBufLen);
-            if (pAdapterInfo == NULL) {
-                return 1;
-            }
-        }
-
-        if ((dwRetVal = GetAdaptersInfo(pAdapterInfo, &ulOutBufLen)) == NO_ERROR) {
-            pAdapter = pAdapterInfo;
-            while (pAdapter) {
-                if (pAdapter->Type == MIB_IF_TYPE_ETHERNET || 
-                    pAdapter->Type == IF_TYPE_IEEE80211) {  // Ethernet or WiFi
-                    IP_ADDR_STRING *pIpAddr = &(pAdapter->IpAddressList);
-                    while (pIpAddr) {
-                        if (strcmp(pIpAddr->IpAddress.String, "0.0.0.0") != 0 &&
-                            strcmp(pIpAddr->IpAddress.String, "127.0.0.1") != 0) {
-                            #ifdef _MSC_VER
-                                strncpy_s(ip, ipSize, pIpAddr->IpAddress.String, _TRUNCATE);
-                            #else
-                                strncpy(ip, pIpAddr->IpAddress.String, ipSize - 1);
+        dwRetVal = GetAdaptersAddresses(AF_INET, 0, NULL, pAddresses, &outBufLen);
+        
+        if (dwRetVal == NO_ERROR) {
+            PIP_ADAPTER_ADDRESSES pCurrAddresses = pAddresses;
+            
+            while (pCurrAddresses) {
+                if (pCurrAddresses->OperStatus == IfOperStatusUp && 
+                    (pCurrAddresses->IfType == IF_TYPE_ETHERNET_CSMACD || 
+                     pCurrAddresses->IfType == IF_TYPE_IEEE80211)) {  // Ethernet or WiFi
+                    
+                    PIP_ADAPTER_UNICAST_ADDRESS pUnicast = pCurrAddresses->FirstUnicastAddress;
+                    while (pUnicast) {
+                        if (pUnicast->Address.lpSockaddr->sa_family == AF_INET) {
+                            struct sockaddr_in *sa_in = (struct sockaddr_in *)pUnicast->Address.lpSockaddr;
+                            const char* ipAddr = inet_ntoa(sa_in->sin_addr);
+                            
+                            if (strcmp(ipAddr, "0.0.0.0") != 0 && strcmp(ipAddr, "127.0.0.1") != 0) {
+                                strncpy(ip, ipAddr, ipSize - 1);
                                 ip[ipSize - 1] = '\0';
-                            #endif
-                            free(pAdapterInfo);
-                            return 0;
+                                free(pAddresses);
+                                return 0;
+                            }
                         }
-                        pIpAddr = pIpAddr->Next;
+                        pUnicast = pUnicast->Next;
                     }
                 }
-                pAdapter = pAdapter->Next;
+                pCurrAddresses = pCurrAddresses->Next;
             }
         }
         
-        free(pAdapterInfo);
+        if (pAddresses) {
+            free(pAddresses);
+        }
         return 1;
     #else
-        // Unix-like implementation
+        // Unix-like 
         struct ifaddrs *ifaddr, *ifa;
         int family, s;
         char host[NI_MAXHOST];

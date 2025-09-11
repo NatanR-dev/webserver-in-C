@@ -1,30 +1,10 @@
-// Common
+// Common includes
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef _WIN32
-    // WINDOWS
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    #include <iphlpapi.h>
-    #define close closesocket
-    
-    // LINKING LIBS
-    #ifdef _MSC_VER
-        #pragma comment(lib, "ws2_32.lib")
-        #pragma comment(lib, "iphlpapi.lib")
-    #endif
-#else
-    // UNIX-LIKE
-    #include <unistd.h>
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <arpa/inet.h>
-    #include <netdb.h>
-#endif
+// Platform-specific includes and definitions
+#include "shared/platform/platform.h"
 
 // Imports
 #include "server/server.h"
@@ -36,14 +16,10 @@
 // Constants
 #define BUFFER_SIZE 4096
 
-void handleClient(Server* server, int clientConnection) {
+void handleClient(Server* server, PLATFORM_SOCKET clientConnection) {
     char buffer[BUFFER_SIZE] = {0};
     
-    #ifdef _WIN32
     int bytesRead = recv(clientConnection, buffer, BUFFER_SIZE - 1, 0);
-    #else
-    int bytesRead = read(clientConnection, buffer, BUFFER_SIZE - 1);
-    #endif
     
     if (bytesRead > 0) {
         buffer[bytesRead] = '\0';
@@ -53,7 +29,7 @@ void handleClient(Server* server, int clientConnection) {
     closeConnection(clientConnection, "");
 }
 
-int handleRequest(Server* server, int clientConnection, char* request) {
+int handleRequest(Server* server, PLATFORM_SOCKET clientConnection, char* request) {
     if (strncmp(request, "GET ", 4) != 0) {
         sendErrorResponse(clientConnection, 405, "Method Not Allowed", "Only GET method is allowed");
         return 0;
@@ -81,10 +57,21 @@ int handleRequest(Server* server, int clientConnection, char* request) {
     return 0;
 }
 
-int main() {
-    initSockets();
+int main()
+{
+    if (platformNetworkingInit() != 0) {
+        fprintf(stderr, "Failed to initialize platform networking\n");
+        return 1;
+    }
     
-    Server server = {0};
+    Server server;
+    startServer(&server, 8080);
+    
+    if (server.socket < 0) {
+        fprintf(stderr, "Failed to initialize server\n");
+        platformNetworkingCleanup();
+        return 1;
+    }
     
     addRoute(&server, "/", rootPathHandler);
     addRoute(&server, "/api/api-test", apiHandler);
@@ -92,9 +79,10 @@ int main() {
     addRoute(&server, "/api/os", osHandler);
     addRoute(&server, "/api/sys", systemInfoHandler);
     
-    startServer(&server);
+    serverListening(&server, handleClient);
+    
     cleanupServer(&server);
-    cleanupSockets();
+    platformNetworkingCleanup();
     
     return 0;
 }

@@ -1,20 +1,21 @@
 #include "utils.h"
 
-// Common
+// Common includes
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 
-#ifdef _WIN32
-    // WINDOWS
-    #include <windows.h>
+// Platform includes
+#include "../shared/platform/platform.h"
+
+// Platform-specific includes
+#ifdef PLATFORM_WINDOWS
     #include <iphlpapi.h>
     #include <intrin.h>
     #ifdef _MSC_VER
         #pragma comment(lib, "iphlpapi.lib")
     #endif
 #else
-    // UNIX-LIKE
     #include <unistd.h>
     #include <sys/utsname.h>
     #include <sys/stat.h>
@@ -30,7 +31,7 @@ void generateMachineId(char* id, size_t idSize) {
     unsigned char hash[16] = {0};
     size_t hashSize = 0;
 
-    #ifdef _WIN32
+    #ifdef PLATFORM_WINDOWS
         // Windows - Serial number
         char volumeName[MAX_PATH + 1] = {0};
         char fileSystemName[MAX_PATH + 1] = {0};

@@ -3,6 +3,9 @@
 
 #include <stddef.h>
 
+// Platform includes
+#include "../platform/platform.h"
+
 /**
  * @brief Gets the local IP address
  * @param ip Buffer to store the IP address

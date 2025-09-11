@@ -3,12 +3,10 @@
 
 #include <stddef.h>
 
-// Forward declaration for the client connection type
-#ifndef _WIN32
-typedef int SOCKET;
-#define INVALID_SOCKET (-1)
-#define SOCKET_ERROR (-1)
-#endif
+// Platform includes
+#include "../../platform/platform.h"
+
+// Socket types are now defined in platform.h
 
 /**
  * @brief Escapes a string for JSON output

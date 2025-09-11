@@ -3,15 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _WIN32
-    #include <winsock2.h>
-    #define SEND_FUNC send
-#else
-    #include <unistd.h>
-    #define SEND_FUNC write
-#endif
+// Platform includes
+#include "../platform/platform.h"
 
-void sendHttpResponse(int clientConnection, int statusCode, const char* statusMessage, 
+// Platform-specific 
+#define SEND_FUNC send
+
+void sendHttpResponse(PLATFORM_SOCKET clientConnection, int statusCode, const char* statusMessage, 
         const char* contentType, const char* body, const char* connection) {
     int requiredSize = snprintf(NULL, 0, 
         "HTTP/1.1 %d %s\r\n"
@@ -36,17 +34,17 @@ void sendHttpResponse(int clientConnection, int statusCode, const char* statusMe
         "%s", 
         statusCode, statusMessage, contentType, (int)strlen(body), connection, body);
     
-    SEND_FUNC(clientConnection, response, (int)strlen(response), 0);
+    send(clientConnection, response, (int)strlen(response), 0);
     free(response);
 }
 
-void sendErrorResponse(int clientConnection, int statusCode, 
+void sendErrorResponse(PLATFORM_SOCKET clientConnection, int statusCode, 
         const char* statusMessage, const char* body) {
     sendHttpResponse(clientConnection, statusCode, statusMessage, 
         "text/plain", body, "close");
 }
 
-void sendJsonResponse(int clientConnection, const char* json) {
+void sendJsonResponse(PLATFORM_SOCKET clientConnection, const char* json) {
     sendHttpResponse(clientConnection, 200, "OK", 
         "application/json; charset=utf-8", json, "keep-alive");
 }

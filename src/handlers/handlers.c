@@ -1,36 +1,8 @@
-// Common
+// Common 
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
-
-// Project includes
-#include "../shared/http/response.h"
-
-#ifdef _WIN32
-    // Windows 
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
-    #include <winsock2.h>
-    #include <ws2tcpip.h>  
-    #include <iphlpapi.h>
-    
-    // Linking libs
-    #ifdef _MSC_VER
-        #pragma comment(lib, "ws2_32.lib")
-        #pragma comment(lib, "iphlpapi.lib")
-    #endif
-#else
-    // UNIX-LIKE
-    #include <unistd.h>
-    #include <ifaddrs.h>
-    #include <netdb.h>
-    #include <net/if.h>
-    #include <arpa/inet.h>
-    #include <sys/socket.h>
-    #include <sys/types.h>
-    #include <netinet/in.h> 
-#endif
 
 // Imports
 #include "handlers.h"
@@ -38,8 +10,9 @@
 #include "../shared/formats/json/json.h"
 #include "../shared/http/response.h"
 #include "../shared/http/network.h"
+#include "../shared/platform/platform.h"
 
-void rootPathHandler(Server* server, int clientConnection) {
+void rootPathHandler(Server* server, PLATFORM_SOCKET clientConnection) {
 
     char routes[8192] = "[";
     size_t offset = 1; 
@@ -78,7 +51,7 @@ void rootPathHandler(Server* server, int clientConnection) {
     sendJsonResponse(clientConnection, json);
 }
 
-void apiHandler(Server* server, int clientConnection) {
+void apiHandler(Server* server, PLATFORM_SOCKET clientConnection) {
     (void)server;
     char json[256];
     createJsonObject(json, sizeof(json), 2,
@@ -87,7 +60,7 @@ void apiHandler(Server* server, int clientConnection) {
     sendJsonResponse(clientConnection, json);
 }
 
-void machinesHandler(Server* server, int clientConnection) {
+void machinesHandler(Server* server, PLATFORM_SOCKET clientConnection) {
     (void)server;  
     char machineId[33] = {0};
     char ip[46] = "127.0.0.1";  
@@ -112,11 +85,11 @@ void machinesHandler(Server* server, int clientConnection) {
     sendJsonResponse(clientConnection, json);
 }
 
-void osHandler(Server* server, int clientConnection) {
+void osHandler(Server* server, PLATFORM_SOCKET clientConnection) {
     (void)server;  
     char osName[32] = "Unknown";
     
-    #ifdef _WIN32
+    #ifdef PLATFORM_WINDOWS
         strncpy(osName, "Windows", sizeof(osName));
     #elif defined(__linux__)
         strncpy(osName, "Linux", sizeof(osName));
@@ -129,7 +102,7 @@ void osHandler(Server* server, int clientConnection) {
     sendJsonResponse(clientConnection, json);
 }
 
-void systemInfoHandler(Server* server, int clientConnection) {
+void systemInfoHandler(Server* server, PLATFORM_SOCKET clientConnection) {
     (void)server;  
     char json[BUFFER_SIZE];
 
@@ -138,7 +111,7 @@ void systemInfoHandler(Server* server, int clientConnection) {
     char datetime[20];
     strftime(datetime, sizeof(datetime), "%Y-%m-%d %H:%M:%S", timeinfo);
 
-    #ifdef _WIN32
+    #ifdef PLATFORM_WINDOWS
         SYSTEM_INFO sysInfo;
         GetSystemInfo(&sysInfo);
         int arch = sysInfo.wProcessorArchitecture;

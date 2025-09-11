@@ -1,8 +1,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-// Common
+// Common includes
 #include <stddef.h>
+
+// Platform includes
+#include "../shared/platform/platform.h"
 
 /**
  * @brief Generates a unique machine ID

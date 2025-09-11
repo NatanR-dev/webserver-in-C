@@ -4,6 +4,9 @@
 #include <string.h>
 #include <stdbool.h>
 
+// Platform includes
+#include "../../platform/platform.h"
+
 void jsonEscapeString(const char* input, char* output, size_t outputSize) {
     size_t i = 0;
     size_t j = 0;
@@ -46,7 +49,6 @@ void jsonEscapeString(const char* input, char* output, size_t outputSize) {
                 break;
             default:
                 if (input[i] < ' ') {
-                    // Skip control characters
                 } else if (j < outputSize - 1) {
                     output[j++] = input[i];
                 }

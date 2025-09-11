@@ -9,10 +9,10 @@
 // Imports
 #include "../server/server.h"
 
-void rootPathHandler(Server* server, int clientConnection);
-void apiHandler(Server* server, int clientConnection);
-void machinesHandler(Server* server, int clientConnection);
-void osHandler(Server* server, int clientConnection);
-void systemInfoHandler(Server* server, int clientConnection);
+void rootPathHandler(Server* server, PLATFORM_SOCKET clientConnection);
+void apiHandler(Server* server, PLATFORM_SOCKET clientConnection);
+void machinesHandler(Server* server, PLATFORM_SOCKET clientConnection);
+void osHandler(Server* server, PLATFORM_SOCKET clientConnection);
+void systemInfoHandler(Server* server, PLATFORM_SOCKET clientConnection);
 
 #endif 

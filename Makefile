@@ -53,10 +53,23 @@ endif
 
 # Source files
 SRC_DIR = src
+
+# Platform-specific source files
+PLATFORM_SRC = $(wildcard $(SRC_DIR)/shared/platform/*.c)
+
+# Platform-specific source files (Windows or Unix)
+ifeq ($(OS),Windows_NT)
+    PLATFORM_SRC += $(wildcard $(SRC_DIR)/shared/platform/windows/*.c)
+else
+    PLATFORM_SRC += $(wildcard $(SRC_DIR)/shared/platform/unix/*.c)
+endif
+
+# Common source files
 SRC = $(wildcard $(SRC_DIR)/*.c) \
       $(wildcard $(SRC_DIR)/*/*.c) \
       $(wildcard $(SRC_DIR)/shared/http/*.c) \
-      $(wildcard $(SRC_DIR)/shared/formats/json/*.c)
+      $(wildcard $(SRC_DIR)/shared/formats/json/*.c) \
+      $(PLATFORM_SRC)
 
 # Object files
 OBJ_DIR = obj

@@ -5,21 +5,17 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#ifdef _WIN32
-// WINDOWS
-    #include <winsock2.h>
-#else
-// UNIX-LIKE
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-#endif
+// Platform includes
+#include "../shared/platform/platform.h"
+
+// Socket types are now defined in platform.h
 
 // Constants
 #define MAX_ROUTES 10
 
 typedef struct Route Route;
 typedef struct Server Server;
-typedef void (*RouteHandler)(Server*, int);
+typedef void (*RouteHandler)(Server*, PLATFORM_SOCKET);
 
 struct Route {
     char* path;
@@ -28,15 +24,17 @@ struct Route {
 
 struct Server {
     int socket;
+    int port;  
     Route routes[MAX_ROUTES];
     int routeCount;
 };
 
 void initSockets();
 void cleanupSockets();
-void closeConnection(int clientConnection, char* response);
-void startServer(Server* server);
+void closeConnection(PLATFORM_SOCKET clientConnection, char* response);
+void startServer(Server* server, int port);
+void serverListening(Server* server, void (*clientHandler)(Server*, PLATFORM_SOCKET));
 void cleanupServer(Server* server);
-int handleRequest(Server* server, int clientConnection, char* request);
+int handleRequest(Server* server, PLATFORM_SOCKET clientConnection, char* request);
 
 #endif 

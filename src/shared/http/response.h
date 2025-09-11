@@ -3,6 +3,9 @@
 
 #include <stddef.h>
 
+// Platform includes
+#include "../platform/platform.h"
+
 /**
  * @brief Sends an HTTP response to the client
  * @param clientConnection The client connection socket
@@ -12,7 +15,7 @@
  * @param body Response body
  * @param connection Connection header value (e.g., "keep-alive" or "close")
  */
-void sendHttpResponse(int clientConnection, int statusCode, const char* statusMessage, 
+void sendHttpResponse(PLATFORM_SOCKET clientConnection, int statusCode, const char* statusMessage, 
     const char* contentType, const char* body, const char* connection);
 
 /**
@@ -22,7 +25,7 @@ void sendHttpResponse(int clientConnection, int statusCode, const char* statusMe
  * @param statusMessage HTTP status message
  * @param body Error message body
  */
-void sendErrorResponse(int clientConnection, int statusCode, 
+void sendErrorResponse(PLATFORM_SOCKET clientConnection, int statusCode, 
     const char* statusMessage, const char* body);
 
 /**
@@ -30,6 +33,6 @@ void sendErrorResponse(int clientConnection, int statusCode,
  * @param clientConnection The client connection socket
  * @param json JSON string to send
  */
-void sendJsonResponse(int clientConnection, const char* json);
+void sendJsonResponse(PLATFORM_SOCKET clientConnection, const char* json);
 
-#endif // HTTP_RESPONSE_H
+#endif 

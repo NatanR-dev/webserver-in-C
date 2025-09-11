@@ -1,30 +1,10 @@
-// Common
+// Common includes
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-// WINDOWS
-#ifdef _WIN32
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    #include <iphlpapi.h>
-    #define close closesocket
-    
-    // Linking libs
-    #ifdef _MSC_VER
-        #pragma comment(lib, "ws2_32.lib")
-    #endif
-#else
-    // UNIX-LIKE
-    #include <unistd.h>
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <arpa/inet.h>
-    #include <netdb.h>
-    #include <sys/types.h>
-#endif
+// Platform includes
+#include "../shared/platform/platform.h"
 
 // Imports
 #include "server.h"
@@ -34,80 +14,105 @@
 #define PORT 8080
 #define BUFFER_SIZE 4096
 
-extern int handleRequest(Server* server, int clientConnection, char* request);
+int handleRequest(Server* server, PLATFORM_SOCKET clientConnection, char* request);
 
-extern void handleClient(Server* server, int clientConnection);
+void handleClient(Server* server, PLATFORM_SOCKET clientConnection);
 
 void initSockets() {
-    #ifdef _WIN32
-    WSADATA wsa;
-    WSAStartup(MAKEWORD(2, 2), &wsa);
-    #endif
+    platformNetworkingInit();
 }
 
 void cleanupSockets() {
-    #ifdef _WIN32
-    WSACleanup();
-    #endif
+    platformNetworkingCleanup();
 }
 
-void closeConnection(int clientConnection, char* response) {
-    #ifdef _WIN32
-    send(clientConnection, response, (int)strlen(response), 0);
-    shutdown(clientConnection, SD_BOTH);
-    closesocket(clientConnection);
-    #else
-    write(clientConnection, response, strlen(response));
-    shutdown(clientConnection, SHUT_RDWR);
-    close(clientConnection);
-    #endif
+void closeConnection(PLATFORM_SOCKET clientConnection, char* response) {
+    if (response && *response) {
+        send(clientConnection, response, (int)strlen(response), 0);
+    }
+    shutdown(clientConnection, PLATFORM_SHUT_RDWR);
+    PLATFORM_CLOSE_SOCKET(clientConnection);
 }
 
-void startServer(Server* server) {
+void startServer(Server* server, int port) {
+    if (!server) {
+        return;
+    }
+    
+    server->socket = -1;
+    server->port = port;  
+    server->routeCount = 0;
+    
     server->socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server->socket < 0) {
         perror("Socket creation failed");
-        exit(1);
+        return;
+    }
+    
+    int opt = 1;
+    if (setsockopt(server->socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt)) < 0) {
+        perror("setsockopt failed");
+        PLATFORM_CLOSE_SOCKET(server->socket);
+        server->socket = -1;
+        return;
     }
     
     struct sockaddr_in serverAddress = {0};
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = INADDR_ANY;
-    serverAddress.sin_port = htons(PORT);
+    serverAddress.sin_port = htons(port);
     
     if (bind(server->socket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) {
         perror("Bind failed");
-        close(server->socket);
-        exit(1);
+        PLATFORM_CLOSE_SOCKET(server->socket);
+        server->socket = -1;
+        return;
     }
     
-    if (listen(server->socket, 3) < 0) {
+    if (listen(server->socket, 5) < 0) {
         perror("Listen failed");
-        close(server->socket);
-        exit(1);
+        PLATFORM_CLOSE_SOCKET(server->socket);
+        server->socket = -1;
+        return;
     }
+    
+}
 
-    printf("Server started on port %d...\n", PORT);
-
+void serverListening(Server* server, void (*clientHandler)(Server*, PLATFORM_SOCKET)) {
+    if (!server || server->socket < 0 || !clientHandler) {
+        return;
+    }
+    
+    printf("Server started on port %d, waiting for connections...\n", server->port);
+    
     while (1) {
         struct sockaddr_in clientAddress = {0};
-        #ifdef _WIN32
-        int clientSize = sizeof(clientAddress);
-        #else
         socklen_t clientSize = sizeof(clientAddress);
-        #endif
-        int clientConnection = accept(server->socket, (struct sockaddr*)&clientAddress, &clientSize);
-        if (clientConnection < 0) {
+        PLATFORM_SOCKET clientConnection = accept(server->socket, (struct sockaddr*)&clientAddress, &clientSize);
+        if (clientConnection == INVALID_PLATFORM_SOCKET) {
             perror("Accept failed");
             continue;
         }
+        
         printf("Connection received from %s\n", inet_ntoa(clientAddress.sin_addr));
-        handleClient(server, clientConnection);
+        clientHandler(server, clientConnection);
     }
 }
 
 void cleanupServer(Server* server) {
+    if (!server) {
+        return;
+    }
+    
+    if (server->socket >= 0) {
+        PLATFORM_CLOSE_SOCKET(server->socket);
+        server->socket = -1;
+    }
+    
     for (int i = 0; i < server->routeCount; i++) {
-        free(server->routes[i].path);
+        if (server->routes[i].path) {
+            free(server->routes[i].path);
+            server->routes[i].path = NULL;
+        }
     }
 }
