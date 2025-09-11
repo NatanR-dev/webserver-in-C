@@ -1,5 +1,5 @@
 #include "json.h"
-#include "http.h"  
+#include "../../http/response.h"
 #include <stdarg.h>
 #include <string.h>
 #include <stdbool.h>
@@ -46,6 +46,7 @@ void jsonEscapeString(const char* input, char* output, size_t outputSize) {
                 break;
             default:
                 if (input[i] < ' ') {
+                    // Skip control characters
                 } else if (j < outputSize - 1) {
                     output[j++] = input[i];
                 }
@@ -54,10 +55,6 @@ void jsonEscapeString(const char* input, char* output, size_t outputSize) {
         i++;
     }
     output[j] = '\0';
-}
-
-void sendJsonResponse(int clientConnection, const char* json) {
-    sendHttpResponse(clientConnection, 200, "OK", "application/json", json, "keep-alive");
 }
 
 int createJsonObject(char* buffer, size_t bufferSize, int count, ...) {

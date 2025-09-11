@@ -4,6 +4,9 @@
 #include <time.h>
 #include <stdlib.h>
 
+// Project includes
+#include "../shared/http/response.h"
+
 #ifdef _WIN32
     // Windows 
     #define WIN32_LEAN_AND_MEAN
@@ -32,8 +35,9 @@
 // Imports
 #include "handlers.h"
 #include "../utils/utils.h"
-#include "../utils/json.h"
-#include "../utils/http.h"
+#include "../shared/formats/json/json.h"
+#include "../shared/http/response.h"
+#include "../shared/http/network.h"
 
 void rootPathHandler(Server* server, int clientConnection) {
 

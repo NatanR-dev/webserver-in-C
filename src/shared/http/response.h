@@ -1,5 +1,5 @@
-#ifndef HTTP_UTILS_H
-#define HTTP_UTILS_H
+#ifndef HTTP_RESPONSE_H
+#define HTTP_RESPONSE_H
 
 #include <stddef.h>
 
@@ -26,11 +26,10 @@ void sendErrorResponse(int clientConnection, int statusCode,
     const char* statusMessage, const char* body);
 
 /**
- * @brief Gets the local IP address
- * @param ip Buffer to store the IP address
- * @param ipSize Size of the buffer
- * @return 0 on success, non-zero on error
+ * @brief Sends a JSON response to the client
+ * @param clientConnection The client connection socket
+ * @param json JSON string to send
  */
-int getLocalIP(char* ip, size_t ipSize);
+void sendJsonResponse(int clientConnection, const char* json);
 
-#endif 
+#endif // HTTP_RESPONSE_H

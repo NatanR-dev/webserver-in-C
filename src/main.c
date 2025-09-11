@@ -30,7 +30,8 @@
 #include "server/server.h"
 #include "routes/routes.h"
 #include "handlers/handlers.h"
-#include "utils/http.h"  
+#include "shared/http/response.h"
+#include "shared/http/network.h"
 
 // Constants
 #define BUFFER_SIZE 4096

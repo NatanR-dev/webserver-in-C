@@ -54,7 +54,9 @@ endif
 # Source files
 SRC_DIR = src
 SRC = $(wildcard $(SRC_DIR)/*.c) \
-      $(wildcard $(SRC_DIR)/*/*.c)
+      $(wildcard $(SRC_DIR)/*/*.c) \
+      $(wildcard $(SRC_DIR)/shared/http/*.c) \
+      $(wildcard $(SRC_DIR)/shared/formats/json/*.c)
 
 # Object files
 OBJ_DIR = obj

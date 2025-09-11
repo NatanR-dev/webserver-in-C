@@ -3,6 +3,13 @@
 
 #include <stddef.h>
 
+// Forward declaration for the client connection type
+#ifndef _WIN32
+typedef int SOCKET;
+#define INVALID_SOCKET (-1)
+#define SOCKET_ERROR (-1)
+#endif
+
 /**
  * @brief Escapes a string for JSON output
  * @param input The input string to escape
@@ -10,13 +17,6 @@
  * @param outputSize Size of the output buffer
  */
 void jsonEscapeString(const char* input, char* output, size_t outputSize);
-
-/**
- * @brief Sends a JSON response to the client
- * @param clientConnection The client connection socket
- * @param json The JSON string to send
- */
-void sendJsonResponse(int clientConnection, const char* json);
 
 /**
  * @brief Creates a JSON object string from key-value pairs
@@ -28,4 +28,4 @@ void sendJsonResponse(int clientConnection, const char* json);
  */
 int createJsonObject(char* buffer, size_t bufferSize, int count, ...);
 
-#endif 
+#endif // JSON_UTILS_H
