@@ -9,12 +9,22 @@
 // Imports
 #include "routes.h"
 
-void addRoute(Server* server, char* path, RouteHandler handler) {
+int addRoute(Server* server, const char* path, RouteHandler handler) {
+    if (!server || !path || !handler) {
+        return -1;
+    }
+    
     if (server->routeCount >= MAX_ROUTES) {
         fprintf(stderr, "Error: Maximum number of routes (%d) exceeded\n", MAX_ROUTES);
-        return;
+        return -1;
     }
+    
     server->routes[server->routeCount].path = strdup(path);
+    if (!server->routes[server->routeCount].path) {
+        return -1;
+    }
+    
     server->routes[server->routeCount].handler = handler;
     server->routeCount++;
+    return 0;
 }

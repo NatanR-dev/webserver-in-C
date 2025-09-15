@@ -7,6 +7,6 @@
 // Imports
 #include "../server/server.h"
 
-void addRoute(Server* server, char* path, RouteHandler handler);
+int addRoute(Server* server, const char* path, RouteHandler handler);
 
 #endif 

@@ -19,13 +19,29 @@
 #include <time.h>
 #include <stdlib.h>
 
+// Platform abstraction functions
+int platformGenerateMachineId(char* buffer, size_t size);
+int platformGetLocalIp(char* buffer, size_t size);
+
 // Platform-specific includes
-#ifdef PLATFORM_WINDOWS
-    #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
+#ifdef _WIN32
     #include <winsock2.h>
     #include <ws2tcpip.h>
+    #include <windows.h>
     #include <iphlpapi.h>
+    #include <ws2tcpip.h>
+    #include <io.h>
+    #include <process.h>
+    #include <direct.h>
+    #include <time.h>
+    #include <sys/types.h>
+    #include <sys/stat.h>
+    #include <fcntl.h>
+    #include <errno.h>
+    #include <io.h>
+    #define stat _stat
+    #define fstat _fstat
+    #define fileno _fileno
     
     // Windows-specific types and macros
     #define PLATFORM_SOCKET SOCKET
@@ -47,14 +63,39 @@
 #else
     // UNIX/Linux includes
     #include <unistd.h>
-    #include <ifaddrs.h>
-    #include <netdb.h>
-    #include <net/if.h>
-    #include <arpa/inet.h>
     #include <sys/socket.h>
-    #include <sys/types.h>
     #include <netinet/in.h>
-    #include <sys/socket.h>
+    #include <arpa/inet.h>
+    #include <netdb.h>
+    #include <ifaddrs.h>
+    #include <net/if.h>
+    #include <fcntl.h>
+    #include <sys/stat.h>
+    #include <sys/types.h>
+    #include <sys/select.h>
+    #include <sys/time.h>
+    #include <sys/ioctl.h>
+    #include <errno.h>
+    #include <pthread.h>
+    #include <signal.h>
+    #include <dirent.h>
+    #include <time.h>
+    #include <sys/mman.h>
+    #include <pwd.h>
+    #include <grp.h>
+    #include <sys/sysinfo.h>
+    #include <sys/utsname.h>
+    #include <sys/resource.h>
+    #include <sys/wait.h>
+    #include <sys/statvfs.h>
+    #include <netinet/if_ether.h>
+    #include <net/ethernet.h>
+    #include <netinet/ip.h>
+    #include <netinet/ip_icmp.h>
+    #include <netinet/tcp.h>
+    #include <netinet/udp.h>
+    #include <netinet/ip6.h>
+    #include <netinet/icmp6.h>
     
     // UNIX-specific types and macros
     #define PLATFORM_SOCKET int

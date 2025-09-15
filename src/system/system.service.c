@@ -1,111 +1,71 @@
-// Common 
-#include <stdio.h>
-#include <string.h>
+#include "system.service.h"
+#include "../shared/formats/json/json.h"
+#include "../shared/platform/platform.h"
 #include <time.h>
+#include <string.h>
 #include <stdlib.h>
 
-// Imports
-#include "handlers.h"
-#include "../utils/utils.h"
-#include "../shared/formats/json/json.h"
-#include "../shared/http/response.h"
-#include "../shared/http/network.h"
-#include "../shared/platform/platform.h"
+void systemServiceInit(SystemService* service) {
+    (void)service; 
+}
 
-void rootPathHandler(Server* server, PLATFORM_SOCKET clientConnection) {
-
-    char routes[8192] = "[";
-    size_t offset = 1; 
+char* getMachineInfo(SystemService* service) {
+    (void)service;
     
-    for (int i = 0; i < server->routeCount; i++) {
-
-        char fullUrl[2048];
-        snprintf(fullUrl, sizeof(fullUrl), "http://localhost:8080%s", 
-                server->routes[i].path);
-        
-        char routeObj[4096];
-        createJsonObject(routeObj, sizeof(routeObj), 2,
-            "path", server->routes[i].path,
-            "link", fullUrl);
-        
-        if (i > 0) {
-            offset += snprintf(routes + offset, sizeof(routes) - offset, ",\n        ");
-        } else {
-            offset += snprintf(routes + offset, sizeof(routes) - offset, "\n        ");
-        }
-        
-        offset += snprintf(routes + offset, sizeof(routes) - offset, "%s", routeObj);
+    char* result = malloc(1024);
+    if (!result) return NULL;
+    
+    char machineId[256] = {0};
+    char ip[46] = "127.0.0.1";
+    
+    if (platformGenerateMachineId(machineId, sizeof(machineId)) != 0) {
+        strncpy(machineId, "unknown_id", sizeof(machineId) - 1);
     }
     
-    snprintf(routes + offset, sizeof(routes) - offset, "\n    ]");
-    
-    char json[16384];
-    snprintf(json, sizeof(json),
-        "{\n"
-        "   \"message\": \"Welcome to low-level C API\",\n"
-        "   \"version\": \"1.0\",\n"
-        "   \"available_routes\": %s\n"
-        "}",
-        routes);
-    
-    sendJsonResponse(clientConnection, json);
-}
-
-void apiHandler(Server* server, PLATFORM_SOCKET clientConnection) {
-    (void)server;
-    char json[256];
-    createJsonObject(json, sizeof(json), 2,
-            "message", "Hello from my API!",
-            "port", "8080");
-    sendJsonResponse(clientConnection, json);
-}
-
-void machinesHandler(Server* server, PLATFORM_SOCKET clientConnection) {
-    (void)server;  
-    char machineId[33] = {0};
-    char ip[46] = "127.0.0.1";  
-    
-    generateMachineId(machineId, sizeof(machineId));
-    
-    if (getLocalIP(ip, sizeof(ip)) != 0) {
-        strncpy(ip, "127.0.0.1", sizeof(ip));
+    if (platformGetLocalIp(ip, sizeof(ip)) != 0) {
+        strncpy(ip, "127.0.0.1", sizeof(ip) - 1);
     }
     
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
     char dateTime[20];
     strftime(dateTime, sizeof(dateTime), "%Y-%m-%d %H:%M:%S", tm_info);
-    char json[1024];
-    createJsonObject(json, sizeof(json), 4,
-            "status", "Started",
-            "id", machineId,
-            "ip", ip,
-            "date", dateTime);
     
-    sendJsonResponse(clientConnection, json);
+    createJsonObject(result, 1024, 4,
+        "status", "Started",
+        "id", machineId,
+        "ip", ip,
+        "date", dateTime);
+        
+    return result;
 }
 
-void osHandler(Server* server, PLATFORM_SOCKET clientConnection) {
-    (void)server;  
-    char osName[32] = "Unknown";
+char* getOsInfo(SystemService* service) {
+    (void)service; 
+    
+    char* result = malloc(256);
+    if (!result) return NULL;
     
     #ifdef PLATFORM_WINDOWS
-        strncpy(osName, "Windows", sizeof(osName));
-    #elif defined(__linux__)
-        strncpy(osName, "Linux", sizeof(osName));
-    #elif defined(__APPLE__)
-        strncpy(osName, "macOS", sizeof(osName));
+        const char* osName = "Windows";
+    #elif defined(PLATFORM_LINUX)
+        const char* osName = "Linux";
+    #elif defined(PLATFORM_MACOS)
+        const char* osName = "macOS";
+    #else
+        const char* osName = "Unknown";
     #endif
     
-    char json[256];
-    createJsonObject(json, sizeof(json), 1, "os", osName);
-    sendJsonResponse(clientConnection, json);
+    createJsonObject(result, 256, 1, "os", osName);
+    return result;
 }
 
-void systemInfoHandler(Server* server, PLATFORM_SOCKET clientConnection) {
-    (void)server;  
-    char json[BUFFER_SIZE];
-
+char* getSystemInfo(SystemService* service) {
+    (void)service; 
+    
+    char* result = malloc(4096);
+    if (!result) return NULL;
+    
     time_t now = time(NULL);
     struct tm* timeinfo = localtime(&now);
     char datetime[20];
@@ -155,31 +115,31 @@ void systemInfoHandler(Server* server, PLATFORM_SOCKET clientConnection) {
         snprintf(coresStr, sizeof(coresStr), "%u", numberOfCores);
         snprintf(logicalStr, sizeof(logicalStr), "%u", numberOfLogicalProcessors);
         
-        createJsonObject(json, sizeof(json), 7,
+        createJsonObject(result, 4096, 7,
             "os", "Windows",
             "arch", architectureName,
             "processorArchitecture", processorArchitecture,
             "numberOfCores", coresStr,
             "numberOfLogicalProcessors", logicalStr,
-            "processorCount", logicalStr,  
+            "processorCount", logicalStr,
             "datetime", datetime);
             
-    #elif defined(__linux__) || defined(__APPLE__)
+    #elif defined(PLATFORM_LINUX) || defined(PLATFORM_MACOS)
         struct utsname uname_data;
         uname(&uname_data);
         unsigned int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
 
         const char* os_name = "Unknown";
-        #ifdef __linux__
+        #ifdef PLATFORM_LINUX
             os_name = "Linux";
-        #elif defined(__APPLE__)
+        #elif defined(PLATFORM_MACOS)
             os_name = "macOS";
         #endif
 
         char coresStr[16];
         snprintf(coresStr, sizeof(coresStr), "%u", num_cores);
 
-        createJsonObject(json, sizeof(json), 8,
+        createJsonObject(result, 4096, 8,
             "os", os_name,
             "sysname", uname_data.sysname,
             "release", uname_data.release,
@@ -189,10 +149,10 @@ void systemInfoHandler(Server* server, PLATFORM_SOCKET clientConnection) {
             "numberOfLogicalProcessors", coresStr,
             "datetime", datetime);
     #else
-        createJsonObject(json, sizeof(json), 2,
+        createJsonObject(result, 4096, 2,
             "os", "Unknown",
             "datetime", datetime);
     #endif
 
-    sendJsonResponse(clientConnection, json);
+    return result;
 }

@@ -9,11 +9,17 @@
     #include <iphlpapi.h>
     #include <ws2tcpip.h>
 #else
-    #include <ifaddrs.h>
-    #include <netdb.h>
-    #include <net/if.h>
-    #include <arpa/inet.h>
-    #include <netinet/in.h>
+    #ifdef _WIN32
+        #include <winsock2.h>
+        #include <ws2tcpip.h>
+        #include <iphlpapi.h>
+    #else
+        #include <ifaddrs.h>
+        #include <netdb.h>
+        #include <net/if.h>
+        #include <arpa/inet.h>
+        #include <netinet/in.h>
+    #endif
 #endif
 
 int getLocalIP(char* ip, size_t ipSize) {

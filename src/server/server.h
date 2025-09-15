@@ -8,13 +8,11 @@
 // Platform includes
 #include "../shared/platform/platform.h"
 
-// Socket types are now defined in platform.h
-
 // Constants
 #define MAX_ROUTES 10
 
-typedef struct Route Route;
 typedef struct Server Server;
+typedef struct Route Route;
 typedef void (*RouteHandler)(Server*, PLATFORM_SOCKET);
 
 struct Route {
@@ -23,18 +21,27 @@ struct Route {
 };
 
 struct Server {
-    int socket;
+    PLATFORM_SOCKET socket;
     int port;  
     Route routes[MAX_ROUTES];
     int routeCount;
 };
 
-void initSockets();
-void cleanupSockets();
-void closeConnection(PLATFORM_SOCKET clientConnection, char* response);
-void startServer(Server* server, int port);
-void serverListening(Server* server, void (*clientHandler)(Server*, PLATFORM_SOCKET));
+int initializeServer(Server* server, int port);
 void cleanupServer(Server* server);
-int handleRequest(Server* server, PLATFORM_SOCKET clientConnection, char* request);
+PLATFORM_SOCKET acceptConnection(Server* server);
+int addRoute(Server* server, const char* path, RouteHandler handler);
+void handleRequest(Server* server, PLATFORM_SOCKET clientConnection, const char* request);
+
+void sendResponse(PLATFORM_SOCKET clientConnection, const char* response);
+void sendJsonResponse(PLATFORM_SOCKET clientConnection, const char* json);
+void sendError(PLATFORM_SOCKET clientConnection, int statusCode, const char* message);
+void sendErrorResponse(PLATFORM_SOCKET clientConnection, int statusCode, const char* statusText, const char* message);
+void closeConnection(PLATFORM_SOCKET clientConnection, const char* message);
+
+void initSockets(void);
+void cleanupSockets(void);
+
+void serverListening(Server* server, void (*clientHandler)(Server*, PLATFORM_SOCKET));
 
 #endif 
