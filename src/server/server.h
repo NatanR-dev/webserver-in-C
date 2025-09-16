@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// Platform includes
+// Platform 
 #include "../shared/platform/platform.h"
 
 // Constants

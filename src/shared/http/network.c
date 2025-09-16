@@ -1,10 +1,9 @@
 #include "network.h"
 #include <string.h>
 
-// Platform includes
+// Platform 
 #include "../platform/platform.h"
 
-// Platform-specific includes
 #ifdef PLATFORM_WINDOWS
     #include <iphlpapi.h>
     #include <ws2tcpip.h>

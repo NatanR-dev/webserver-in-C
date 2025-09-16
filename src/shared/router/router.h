@@ -1,7 +1,7 @@
 #ifndef ROUTES_H
 #define ROUTES_H
 
-// Platform includes
+// Platform 
 #include "../shared/platform/platform.h"
 
 // Imports

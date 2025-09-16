@@ -1,12 +1,12 @@
 #include "response.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-// Platform includes
+// Platform 
 #include "../platform/platform.h"
 
-// Platform-specific 
 #define SEND_FUNC send
 
 void sendHttpResponse(PLATFORM_SOCKET clientConnection, int statusCode, const char* statusMessage, 

@@ -75,6 +75,9 @@ ROOT_SRC = $(wildcard $(SRC_DIR)/root/*.c) \
 SYSTEM_SRC = $(wildcard $(SRC_DIR)/system/*.c) \
              $(SRC_DIR)/system/system.service.c
 
+# Router source files
+ROUTER_SRC = $(wildcard $(SRC_DIR)/shared/router/*.c)
+
 # Common source files
 # Exclude old handlers.c since we've moved its contents to modules
 HANDLERS_TO_EXCLUDE = $(SRC_DIR)/handlers/handlers.c
@@ -86,7 +89,8 @@ SRC = $(filter-out $(HANDLERS_TO_EXCLUDE), \
       $(wildcard $(SRC_DIR)/shared/formats/json/*.c)) \
       $(ROOT_SRC) \
       $(SYSTEM_SRC) \
-      $(PLATFORM_SRC)
+      $(PLATFORM_SRC) \
+      $(ROUTER_SRC)
 
 # Object files
 OBJ_DIR = obj

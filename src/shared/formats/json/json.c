@@ -1,10 +1,12 @@
 #include "json.h"
+
 #include "../../http/response.h"
+
 #include <stdarg.h>
 #include <string.h>
 #include <stdbool.h>
 
-// Platform includes
+// Platform 
 #include "../../platform/platform.h"
 
 void jsonEscapeString(const char* input, char* output, size_t outputSize) {

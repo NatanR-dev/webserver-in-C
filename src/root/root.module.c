@@ -1,7 +1,9 @@
 #include "root.module.h"
 #include "root.controller.h"
 #include "root.service.h"
+
 #include "../server/server.h"
+
 #include <stdlib.h>
 
 static RootService* rootService = NULL;

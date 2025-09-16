@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-// Platform includes
+// Platform 
 #include "../platform/platform.h"
 
 /**

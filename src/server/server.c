@@ -12,7 +12,7 @@
 
 // Server includes
 #include "server.h"
-#include "../routes/routes.h"
+#include "../shared/router/router.h"
 
 // Constants
 #define PORT 8080

@@ -1,7 +1,9 @@
 #include "root.controller.h"
 #include "root.service.h"
+
 #include "../shared/http/response.h"
-#include "../routes/routes.h"
+#include "../shared/router/router.h"
+
 #include <stdlib.h>
 
 static RootService* rootService = NULL;

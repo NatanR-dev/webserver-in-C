@@ -1,7 +1,9 @@
 #include "system.controller.h"
 #include "system.service.h"
+
 #include "../shared/http/response.h"
-#include "../routes/routes.h"
+#include "../shared/router/router.h"
+
 #include <stdlib.h>
 
 static SystemService* systemService = NULL;
