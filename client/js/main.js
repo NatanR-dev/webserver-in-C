@@ -541,7 +541,7 @@ const App = {
           <td>
             <div class="action-buttons">
               <button class="action-button power-button" data-machine-id="${machine.id}" data-machine-status="${machine.status || 'unknown'}">Power</button>
-              <button class="action-button terminal-button" data-machine-id="${machine.id}" ${machine.status !== 'started' ? 'disabled' : ''}>Terminal</button>
+              <button class="action-button terminal-button" data-machine-id="${machine.id}" ${machine.status.toLowerCase() !== 'started' ? 'disabled' : ''}>Terminal</button>
               <button class="action-button toggle-specs" data-machine-id="${machine.id}">Hide Specs</button>
             </div>
           </td>
@@ -622,7 +622,7 @@ const App = {
           <td>
             <div class="action-buttons">
               <button class="action-button power-button" data-machine-id="${machine.id}" data-machine-status="${machine.status || 'unknown'}">Power</button>
-              <button class="action-button terminal-button" data-machine-id="${machine.id}" ${machine.status !== 'started' ? 'disabled' : ''}>Terminal</button>
+              <button class="action-button terminal-button" data-machine-id="${machine.id}" ${machine.status.toLowerCase() !== 'started' ? 'disabled' : ''}>Terminal</button>
               <button class="action-button toggle-specs" data-machine-id="${machine.id}">Hide Specs</button>
             </div>
           </td>
@@ -1022,13 +1022,13 @@ const App = {
             const powerStateCell = row.querySelector('td:nth-child(3)');
             powerStateCell.textContent = result.powerState;
             powerStateCell.className = `power-state-${result.powerState.toLowerCase()}`;
-            const isRunning = result.powerState.toLowerCase() === 'running';
+            const isStarted = result.powerState.toLowerCase() === 'started';
             const terminalButton = row.querySelector(`.terminal-button[data-machine-id="${machineId}"]`);
             if (terminalButton) {
               if (tbodyId === 'overview-machines') {
-                terminalButton.disabled = !isRunning;
+                terminalButton.disabled = !isStarted;
               } else {
-                terminalButton.dataset.disabled = isRunning ? '' : 'true';
+                terminalButton.dataset.disabled = isStarted ? '' : 'true';
               }
               console.log(`Terminal button for machineId ${machineId} set to disabled: ${terminalButton.disabled || terminalButton.dataset.disabled}`);
             }
@@ -1036,9 +1036,10 @@ const App = {
         };
         updatePowerState('overview-machines', 'overview');
         updatePowerState('machines-list', 'machines');
-        this.elements.sharedElements.modal.power.boot.disabled = result.powerState.toLowerCase() === 'running';
-        this.elements.sharedElements.modal.power.reboot.disabled = result.powerState.toLowerCase() !== 'running';
-        this.elements.sharedElements.modal.power.shutdown.disabled = result.powerState.toLowerCase() !== 'running';
+        const isStarted = result.powerState.toLowerCase() === 'started';
+        this.elements.sharedElements.modal.power.boot.disabled = isStarted;
+        this.elements.sharedElements.modal.power.reboot.disabled = !isStarted;
+        this.elements.sharedElements.modal.power.shutdown.disabled = !isStarted;
       }
     } catch (error) {
       statusDiv.textContent = `Error: ${error.message}`;
