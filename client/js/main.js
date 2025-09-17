@@ -378,7 +378,7 @@ const App = {
       const machines = osArray.map((os, index) => {
         const machineInfo = machineArray[index] || machineArray[0] || {};
         const machine = {
-          id: index + 1,
+          id: machineInfo.id || `machine-${index + 1}`,
           os: os.os || 'Unknown',
           powerState: osStatus === 200 && sysStatus === 200 ? 'running' : 'stopped',
           lastLogin: machineInfo.date || os.lastLogin || '2025-09-04 16:53:00',
@@ -386,7 +386,7 @@ const App = {
           location: os.location || 'Unknown',
           status: machineInfo.status || 'unknown',
           info: machineInfo.info || {},
-          loginCount: os.loginCount || Math.floor(Math.random() * 10) + 1,
+          loginCount: os.loginCount || Math.floor(Math.random() * 1) + 1,
           arch: sysArray[index]?.arch || 'Unknown',
           processor: sysArray[index]?.processorArchitecture || 'Unknown',
           cores: sysArray[index]?.numberOfCores || 0,
@@ -396,6 +396,7 @@ const App = {
           snapshots: []
         };
         
+        // Mock data
         machine.loginHistory = this.generateLoginHistory(machine.id, machine.lastLogin, machine.ip, machine.loginCount);
         machine.logs = this.generateLogs(machine.id, machine.lastLogin);
         machine.snapshots = this.generateSnapshots(machine.id, machine.lastLogin);
@@ -523,7 +524,7 @@ const App = {
   renderOverview(machines) {
     const machineHTML = machines.map(machine => {
       const statusClass = machine.status ? `status-${machine.status.toLowerCase()}` : '';
-      const machineId = machine.info?.id || `machine-${machine.id}`;
+      const machineId = machine.info?.id || `${machine.id}`;
       const lastActive = machine.info?.date || machine.lastLogin;
       
       return `
@@ -608,7 +609,7 @@ const App = {
   renderMachines(machines) {
     const machineHTML = machines.map(machine => {
       const statusClass = machine.status ? `status-${machine.status.toLowerCase()}` : '';
-      const machineId = machine.info?.id || `machine-${machine.id}`;
+      const machineId = machine.info?.id || `${machine.id}`;
       const lastActive = machine.info?.date || machine.lastLogin;
       
       return `
