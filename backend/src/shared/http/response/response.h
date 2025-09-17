@@ -35,4 +35,11 @@ void sendErrorResponse(PLATFORM_SOCKET clientConnection, int statusCode,
  */
 void sendJsonResponse(PLATFORM_SOCKET clientConnection, const char* json);
 
+/**
+ * @brief Sends a 404 Not Found response with JSON body
+ * @param clientConnection The client connection socket
+ * @param path The requested path that was not found
+ */
+void httpNotFound(PLATFORM_SOCKET clientConnection, const char* path);
+
 #endif 

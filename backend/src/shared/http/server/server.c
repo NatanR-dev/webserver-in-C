@@ -8,12 +8,12 @@
 #include "../../platform/platform.h"
 
 // Shared HTTP includes
-#include "../response/response.h"
 #include "../network/network.h"
 
 // Server includes
 #include "server.h"
 #include "../router/router.h"
+#include "../response/response.h"
 
 // Constants
 #define PORT 8080
@@ -142,7 +142,6 @@ void handleRequest(Server* server, PLATFORM_SOCKET clientConnection, const char*
     else if (strcmp(method, "OPTIONS") == 0) requestMethod = HTTP_OPTIONS;
     else if (strcmp(method, "HEAD") == 0) requestMethod = HTTP_HEAD;
     
-    // Find the matching route
     for (int i = 0; i < server->routeCount; i++) {
         if (strcmp(server->routes[i].path, path) == 0 && 
             server->routes[i].method == (HttpMethod)requestMethod) {
@@ -151,7 +150,6 @@ void handleRequest(Server* server, PLATFORM_SOCKET clientConnection, const char*
         }
     }
     
-    // Check if path exists but method is not allowed
     bool pathExists = false;
     for (int i = 0; i < server->routeCount; i++) {
         if (strcmp(server->routes[i].path, path) == 0) {
@@ -161,19 +159,10 @@ void handleRequest(Server* server, PLATFORM_SOCKET clientConnection, const char*
     }
     
     if (pathExists) {
-        // Method not allowed
         sendErrorResponse(clientConnection, 405, "Method Not Allowed", 
                          "The requested method is not allowed for this resource");
     } else {
-        // Not found
-        char response[512];
-        snprintf(response, sizeof(response), 
-                "HTTP/1.1 404 Not Found\r\n"
-                "Content-Type: application/json\r\n"
-                "Connection: close\r\n"
-                "\r\n"
-                "{\"error\":\"Not Found\",\"path\":\"%s\"}", path);
-        send(clientConnection, response, (int)strlen(response), 0);
+        httpNotFound(clientConnection, path);
     }
     
     closeConnection(clientConnection, NULL);

@@ -48,3 +48,13 @@ void sendJsonResponse(PLATFORM_SOCKET clientConnection, const char* json) {
     sendHttpResponse(clientConnection, 200, "OK", 
         "application/json; charset=utf-8", json, "keep-alive");
 }
+
+void httpNotFound(PLATFORM_SOCKET clientConnection, const char* path) {
+    char jsonResponse[512];
+    snprintf(jsonResponse, sizeof(jsonResponse),
+        "{\"status\":404,\"error\":\"Not Found\",\"message\":\"The requested resource was not found\",\"path\":\"%s\"}",
+        path);
+        
+    sendHttpResponse(clientConnection, 404, "Not Found",
+        "application/json; charset=utf-8", jsonResponse, "close");
+}
