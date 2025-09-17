@@ -1,6 +1,6 @@
 #include "json.h"
 
-#include "../../http/response.h"
+#include "../../http/response/response.h"
 
 #include <stdarg.h>
 #include <string.h>

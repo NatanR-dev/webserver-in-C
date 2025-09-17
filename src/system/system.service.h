@@ -2,7 +2,7 @@
 #define SYSTEM_SERVICE_H
 
 #include <stddef.h>
-#include "../shared/platform/platform.h"
+#include "../../shared/platform/platform.h"
 
 typedef struct SystemService {
 } SystemService;

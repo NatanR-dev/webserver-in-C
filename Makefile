@@ -13,7 +13,7 @@ BUILD ?= release
 ifeq ($(OS),Windows_NT)
     # Windows configuration
     CC = gcc
-    CFLAGS = -Wall -Wextra -D_WIN32_WINNT=0x0601 -I$(SRC_DIR) -I$(SRC_DIR)/shared -I$(SRC_DIR)/root -I$(SRC_DIR)/system
+    CFLAGS = -Wall -Wextra -D_WIN32_WINNT=0x0601 -I$(SRC_DIR) -I$(SRC_DIR)/shared -I$(SRC_DIR)/shared/http -I$(SRC_DIR)/root -I$(SRC_DIR)/system
     LDFLAGS = -lws2_32 -lwinmm -liphlpapi -lrpcrt4 -lole32 -loleaut32 -luuid -lwbemuuid -ladvapi32 -lshell32
     EXECUTABLE = webserver.exe
     RM = del /f /q
@@ -32,7 +32,7 @@ ifeq ($(OS),Windows_NT)
 else
     # Unix-like configuration (Linux, macOS, etc.)
     CC ?= gcc
-    CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/shared -I$(SRC_DIR)/root -I$(SRC_DIR)/system
+    CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/shared -I$(INCLUDE_DIR)/shared/http -I$(SRC_DIR)/root -I$(SRC_DIR)/system
     LDFLAGS = -pthread  # For multi-threading support on Unix-like systems
     EXECUTABLE = webserver
     RM = rm -f
@@ -56,41 +56,43 @@ endif
 
 # Source files
 SRC_DIR = src
+INCLUDE_DIR = $(SRC_DIR)
+
+# Source files
+MAIN_SRC = $(SRC_DIR)/main.c
+
+# Server source files
+SERVER_SRCS = $(SRC_DIR)/shared/http/server/server.c
 
 # Platform-specific source files
-PLATFORM_SRC = $(wildcard $(SRC_DIR)/shared/platform/*.c)
-
-# Platform-specific source files (Windows or Unix)
 ifeq ($(OS),Windows_NT)
-    PLATFORM_SRC += $(wildcard $(SRC_DIR)/shared/platform/windows/*.c)
+    PLATFORM_SRCS = $(SRC_DIR)/shared/platform/windows/platform.c
 else
-    PLATFORM_SRC += $(wildcard $(SRC_DIR)/shared/platform/unix/*.c)
+    PLATFORM_SRCS = $(SRC_DIR)/shared/platform/unix/platform.c
 endif
 
-# Root module source files
-ROOT_SRC = $(wildcard $(SRC_DIR)/root/*.c) \
-           $(SRC_DIR)/root/root.service.c
+# Shared source files
+SHARED_SRCS = $(PLATFORM_SRCS) \
+              $(SRC_DIR)/shared/http/response/response.c \
+              $(SRC_DIR)/shared/http/network/network.c \
+              $(SRC_DIR)/shared/http/router/router.c \
+              $(SRC_DIR)/shared/http/router/routes.c
 
-# System module source files
-SYSTEM_SRC = $(wildcard $(SRC_DIR)/system/*.c) \
-             $(SRC_DIR)/system/system.service.c
+# Module source files
+MODULE_SRCS = $(SRC_DIR)/root/root.module.c \
+              $(SRC_DIR)/root/root.controller.c \
+              $(SRC_DIR)/root/root.service.c \
+              $(SRC_DIR)/system/system.module.c \
+              $(SRC_DIR)/system/system.controller.c \
+              $(SRC_DIR)/system/system.service.c
 
-# Router source files
-ROUTER_SRC = $(wildcard $(SRC_DIR)/shared/router/*.c)
-
-# Common source files
-# Exclude old handlers.c since we've moved its contents to modules
-HANDLERS_TO_EXCLUDE = $(SRC_DIR)/handlers/handlers.c
-
-SRC = $(filter-out $(HANDLERS_TO_EXCLUDE), \
-      $(wildcard $(SRC_DIR)/*.c) \
-      $(wildcard $(SRC_DIR)/*/*.c) \
+# All source files
+SRC = $(MAIN_SRC) \
+      $(SERVER_SRCS) \
+      $(SHARED_SRCS) \
+      $(MODULE_SRCS) \
       $(wildcard $(SRC_DIR)/shared/http/*.c) \
-      $(wildcard $(SRC_DIR)/shared/formats/json/*.c)) \
-      $(ROOT_SRC) \
-      $(SYSTEM_SRC) \
-      $(PLATFORM_SRC) \
-      $(ROUTER_SRC)
+      $(wildcard $(SRC_DIR)/shared/formats/json/*.c)
 
 # Object files
 OBJ_DIR = obj

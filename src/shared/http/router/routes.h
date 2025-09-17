@@ -2,7 +2,7 @@
 #define ROUTES_H
 
 #include "../server/server.h"
-#include "../platform/platform.h"  // For PLATFORM_SOCKET
+#include "../../platform/platform.h"  // For PLATFORM_SOCKET
 #include "route.decorators.h"
 
 // Use the RouteConfig from route.decorators.h

@@ -1,6 +1,6 @@
 #include "system.service.h"
-#include "../shared/formats/json/json.h"
-#include "../shared/platform/platform.h"
+#include "../../shared/formats/json/json.h"
+#include "../../shared/platform/platform.h"
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>

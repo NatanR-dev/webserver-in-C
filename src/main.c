@@ -5,10 +5,10 @@
 
 // Platform-specific includes and definitions
 #include "shared/platform/platform.h"
-#include "shared/http/response.h"
+#include "shared/http/response/response.h"
 
 // Imports
-#include "server/server.h"
+#include "shared/http/server/server.h"
 #include "root/root.module.h"
 #include "system/system.module.h"
 

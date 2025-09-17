@@ -5,15 +5,15 @@
 #include <stdbool.h>
 
 // Platform includes
-#include "../shared/platform/platform.h"
+#include "../../platform/platform.h"
 
 // Shared HTTP includes
-#include "../shared/http/response.h"
-#include "../shared/http/network.h"
+#include "../response/response.h"
+#include "../network/network.h"
 
 // Server includes
 #include "server.h"
-#include "../shared/router/router.h"
+#include "../router/router.h"
 
 // Constants
 #define PORT 8080
@@ -125,22 +125,19 @@ void handleRequest(Server* server, PLATFORM_SOCKET clientConnection, const char*
         return;
     }
     
-    // Parse the request to get the method and path
     char method[16] = {0};
     char path[256] = {0};
     
-    // Simple request parsing (this is a simplified version)
     if (sscanf(request, "%15s %255s", method, path) != 2) {
         sendErrorResponse(clientConnection, 400, "Bad Request", "Invalid request format");
         closeConnection(clientConnection, NULL);
         return;
     }
     
-    // Convert method string to enum value
-    int requestMethod = HTTP_GET; // Default to GET
+    int requestMethod = HTTP_GET; 
     if (strcmp(method, "POST") == 0) requestMethod = HTTP_POST;
     else if (strcmp(method, "PUT") == 0) requestMethod = HTTP_PUT;
-    else if (strcmp(method, "DELETE") == 0) requestMethod = HTTP_DEL; // Changed from HTTP_DELETE to HTTP_DEL
+    else if (strcmp(method, "DELETE") == 0) requestMethod = HTTP_DEL; 
     else if (strcmp(method, "PATCH") == 0) requestMethod = HTTP_PATCH;
     else if (strcmp(method, "OPTIONS") == 0) requestMethod = HTTP_OPTIONS;
     else if (strcmp(method, "HEAD") == 0) requestMethod = HTTP_HEAD;
@@ -149,7 +146,6 @@ void handleRequest(Server* server, PLATFORM_SOCKET clientConnection, const char*
     for (int i = 0; i < server->routeCount; i++) {
         if (strcmp(server->routes[i].path, path) == 0 && 
             server->routes[i].method == (HttpMethod)requestMethod) {
-            // Call the handler with the correct types
             server->routes[i].handler((void*)server, (void*)(intptr_t)clientConnection);
             return;
         }

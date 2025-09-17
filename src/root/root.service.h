@@ -1,7 +1,7 @@
 #ifndef ROOT_SERVICE_H
 #define ROOT_SERVICE_H
 
-#include "../server/server.h"
+#include "../../shared/http/server/server.h"
 
 typedef struct RootService {
 } RootService;

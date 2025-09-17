@@ -5,7 +5,7 @@
 #include <ctype.h>
 
 // Platform 
-#include "../platform/platform.h"
+#include "../../platform/platform.h"
 
 // Imports
 #include "router.h"

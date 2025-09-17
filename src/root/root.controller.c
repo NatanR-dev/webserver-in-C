@@ -1,23 +1,20 @@
 #include "root.controller.h"
 #include "root.service.h"
 
-#include "../shared/http/response.h"
-#include "../shared/router/route.decorators.h"
-#include "../server/server.h"
+#include "../../shared/http/response/response.h"
+#include "../../shared/http/router/route.decorators.h"
+#include "../../shared/http/server/server.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-// Service instance
 static RootService* rootService = NULL;
 
-// Decorator and Route
 static const RouteConfig rootRoutes[] = {
     GET("/", handleGetRoot),
     GET("/api", handleGetApi)
 };
 
-// Getter
 const RouteConfig* getRootRoutes(int* count) {
     if (count) {
         *count = sizeof(rootRoutes) / sizeof(RouteConfig);
@@ -25,12 +22,9 @@ const RouteConfig* getRootRoutes(int* count) {
     return rootRoutes;
 }
 
-// Service getter 
 RootService* getRootService(void) {
     return rootService;
 }
-
-// Route handlers implementation
 void handleGetRoot(void* serverPtr, void* clientConnectionPtr) {
     Server* server = (Server*)serverPtr;
     PLATFORM_SOCKET clientConnection = (PLATFORM_SOCKET)(uintptr_t)clientConnectionPtr;

@@ -2,7 +2,7 @@
 #include <string.h>
 
 // Platform 
-#include "../platform/platform.h"
+#include "../../platform/platform.h"
 
 #ifdef PLATFORM_WINDOWS
     #include <iphlpapi.h>

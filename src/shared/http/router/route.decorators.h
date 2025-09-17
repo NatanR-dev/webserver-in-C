@@ -21,7 +21,7 @@ typedef void (*RouteHandlerFunc)(void* server, void* clientConnection);
 #define ROUTE(method, path, handler) \
     { method, path, (RouteHandlerFunc)handler }
 
-// Common HTTP methods and macros for route decorators
+// HTTP methods and macros for route decorators
 #define GET(path, handler)     ROUTE(HTTP_GET, path, handler)
 #define POST(path, handler)    ROUTE(HTTP_POST, path, handler)
 #define PUT(path, handler)     ROUTE(HTTP_PUT, path, handler)
@@ -30,18 +30,17 @@ typedef void (*RouteHandlerFunc)(void* server, void* clientConnection);
 #define OPTIONS(path, handler) ROUTE(HTTP_OPTIONS, path, handler)
 #define HEAD(path, handler)    ROUTE(HTTP_HEAD, path, handler)
 
-// Alias for DEL to maintain compatibility with HTTP method names
+// Alias 
 #ifndef DELETE
 #define DELETE DEL
 #endif
 
-// Controller decorator (for future use)
-#define CONTROLLER(prefix) static const char* _controller_prefix = prefix;
+//#define CONTROLLER(prefix) static const char* _controller_prefix = prefix;
 
 // Route configuration structure
 typedef struct {
     HttpMethod method;
-    char* path;  // Changed from const char* to char* to allow freeing
+    char* path;  
     RouteHandlerFunc handler;
 } RouteConfig;
 

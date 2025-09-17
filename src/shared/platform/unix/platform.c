@@ -59,35 +59,42 @@ int platformGetHostname(char* buffer, size_t size) {
 }
 
 int platformGenerateMachineId(char* buffer, size_t size) {
-    if (size < 17) {
+    if (size < 9) {
         return -1;
     }
+    
+    char tempBuffer[256] = {0};
+    int result = -1;
     
     int fd = open("/etc/machine-id", O_RDONLY);
     if (fd != -1) {
-        ssize_t bytes_read = read(fd, buffer, size - 1);
+        ssize_t bytes_read = read(fd, tempBuffer, sizeof(tempBuffer) - 1);
         close(fd);
         
         if (bytes_read > 0) {
-            buffer[bytes_read] = '\0';
-            char* newline = strchr(buffer, '\n');
+            tempBuffer[bytes_read] = '\0';
+            char* newline = strchr(tempBuffer, '\n');
             if (newline) *newline = '\0';
-            return 0;
+            result = 0;
         }
     }
     
-    struct utsname name;
-    if (uname(&name) != 0) {
-        return -1;
+    if (result != 0) {
+        struct utsname name;
+        if (uname(&name) == 0) {
+            strncpy(tempBuffer, name.nodename, sizeof(tempBuffer) - 1);
+            tempBuffer[sizeof(tempBuffer) - 1] = '\0';
+            result = 0;
+        }
     }
     
-    size_t len = strlen(name.nodename);
-    if (len >= size) {
-        len = size - 1;
+    if (result != 0) {
+        strncpy(tempBuffer, "unknown", sizeof(tempBuffer) - 1);
+        result = 0;
     }
     
-    strncpy(buffer, name.nodename, len);
-    buffer[len] = '\0';
+    strncpy(buffer, tempBuffer, 8);
+    buffer[8] = '\0';
     return 0;
 }
 

@@ -1,24 +1,21 @@
 #include "system.controller.h"
 #include "system.service.h"
 
-#include "../shared/http/response.h"
-#include "../shared/router/route.decorators.h"
-#include "../server/server.h"
+#include "../../shared/http/response/response.h"
+#include "../../shared/http/router/route.decorators.h"
+#include "../../shared/http/server/server.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-// Service instance
 static SystemService* systemService = NULL;
 
-// Route configuration using the new decorators
 static const RouteConfig systemRoutes[] = {
     GET("/api/machine", handleGetMachineInfo),
     GET("/api/os", handleGetOsInfo),
     GET("/api/sys", handleGetSystemInfo)
 };
 
-// Route getter implementation
 const RouteConfig* getSystemRoutes(int* count) {
     if (count) {
         *count = sizeof(systemRoutes) / sizeof(RouteConfig);
@@ -26,12 +23,9 @@ const RouteConfig* getSystemRoutes(int* count) {
     return systemRoutes;
 }
 
-// Service getter implementation
 SystemService* getSystemService(void) {
     return systemService;
 }
-
-// Route handlers implementation
 void handleGetMachineInfo(void* serverPtr, void* clientConnectionPtr) {
     PLATFORM_SOCKET clientConnection = (PLATFORM_SOCKET)(uintptr_t)clientConnectionPtr;
     (void)serverPtr;

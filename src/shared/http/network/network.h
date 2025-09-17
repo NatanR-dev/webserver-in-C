@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 // Platform 
-#include "../platform/platform.h"
+#include "../../platform/platform.h"
 
 /**
  * @brief Gets the local IP address

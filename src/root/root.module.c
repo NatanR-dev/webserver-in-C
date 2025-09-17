@@ -2,25 +2,22 @@
 #include "root.controller.h"
 #include "root.service.h"
 
-#include "../server/server.h"
-#include "../shared/router/routes.h"
-#include "../shared/http/response.h"
+#include "../../shared/http/server/server.h"
+#include "../../shared/http/router/routes.h"
+#include "../../shared/http/response/response.h"
 
 #include <stdlib.h>
 
-// Service instance
 static RootService* rootService = NULL;
 
 void rootModuleInit(Server* server) {
     if (!server) return;
     
-    // Initialize service
     rootService = (RootService*)malloc(sizeof(RootService));
     if (!rootService) return;
     
     rootServiceInit(rootService);
     
-    // Register all routes from controller
     int count = 0;
     const RouteConfig* routes = getRootRoutes(&count);
     if (routes && count > 0) {
