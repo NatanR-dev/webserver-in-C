@@ -2,52 +2,71 @@
 #include "system.service.h"
 
 #include "../shared/http/response.h"
-#include "../shared/router/router.h"
+#include "../shared/router/route.decorators.h"
+#include "../server/server.h"
 
 #include <stdlib.h>
+#include <string.h>
 
+// Service instance
 static SystemService* systemService = NULL;
 
-void registerSystemRoutes(Server* server, SystemService* service) {
-    systemService = service;
-    
-    addRoute(server, "/api/machine", machinesHandler);
-    addRoute(server, "/api/os", osHandler);
-    addRoute(server, "/api/sys", systemInfoHandler);
+// Route configuration using the new decorators
+static const RouteConfig systemRoutes[] = {
+    GET("/api/machine", handleGetMachineInfo),
+    GET("/api/os", handleGetOsInfo),
+    GET("/api/sys", handleGetSystemInfo)
+};
+
+// Route getter implementation
+const RouteConfig* getSystemRoutes(int* count) {
+    if (count) {
+        *count = sizeof(systemRoutes) / sizeof(RouteConfig);
+    }
+    return systemRoutes;
 }
 
-void machinesHandler(Server* server, PLATFORM_SOCKET clientConnection) {
-    (void)server; 
+// Service getter implementation
+SystemService* getSystemService(void) {
+    return systemService;
+}
+
+// Route handlers implementation
+void handleGetMachineInfo(void* serverPtr, void* clientConnectionPtr) {
+    PLATFORM_SOCKET clientConnection = (PLATFORM_SOCKET)(uintptr_t)clientConnectionPtr;
+    (void)serverPtr;
     
-    char* response = getMachineInfo(systemService);
+    char* response = getMachineInfo(getSystemService());
     if (response) {
         sendJsonResponse(clientConnection, response);
         free(response);
     } else {
-        sendErrorResponse(clientConnection, 500, "Internal Server Error", "Failed to generate response");
+        sendErrorResponse(clientConnection, 500, "Internal Server Error", "Failed to generate machine info");
     }
 }
 
-void osHandler(Server* server, PLATFORM_SOCKET clientConnection) {
-    (void)server; 
+void handleGetOsInfo(void* serverPtr, void* clientConnectionPtr) {
+    PLATFORM_SOCKET clientConnection = (PLATFORM_SOCKET)(uintptr_t)clientConnectionPtr;
+    (void)serverPtr;
     
-    char* response = getOsInfo(systemService);
+    char* response = getOsInfo(getSystemService());
     if (response) {
         sendJsonResponse(clientConnection, response);
         free(response);
     } else {
-        sendErrorResponse(clientConnection, 500, "Internal Server Error", "Failed to generate response");
+        sendErrorResponse(clientConnection, 500, "Internal Server Error", "Failed to generate OS info");
     }
 }
 
-void systemInfoHandler(Server* server, PLATFORM_SOCKET clientConnection) {
-    (void)server; 
+void handleGetSystemInfo(void* serverPtr, void* clientConnectionPtr) {
+    PLATFORM_SOCKET clientConnection = (PLATFORM_SOCKET)(uintptr_t)clientConnectionPtr;
+    (void)serverPtr;
     
-    char* response = getSystemInfo(systemService);
+    char* response = getSystemInfo(getSystemService());
     if (response) {
         sendJsonResponse(clientConnection, response);
         free(response);
     } else {
-        sendErrorResponse(clientConnection, 500, "Internal Server Error", "Failed to generate response");
+        sendErrorResponse(clientConnection, 500, "Internal Server Error", "Failed to generate system info");
     }
 }

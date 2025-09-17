@@ -2,14 +2,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 // Platform 
-#include "../shared/platform/platform.h"
+#include "../platform/platform.h"
 
 // Imports
 #include "router.h"
+#include "route.decorators.h"
 
-int addRoute(Server* server, const char* path, RouteHandler handler) {
+
+int addRouteMethod(Server* server, const char* path, RouteHandlerFunc handler, int method) {
     if (!server || !path || !handler) {
         return -1;
     }
@@ -25,6 +28,8 @@ int addRoute(Server* server, const char* path, RouteHandler handler) {
     }
     
     server->routes[server->routeCount].handler = handler;
+    server->routes[server->routeCount].method = method;
     server->routeCount++;
     return 0;
 }
+

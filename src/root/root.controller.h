@@ -2,12 +2,18 @@
 #define ROOT_CONTROLLER_H
 
 #include "../server/server.h"
+#include "../shared/router/routes.h"
 
 typedef struct RootService RootService;
 
-void registerRootRoutes(Server* server, RootService* service);
+// Route handlers
+extern void handleGetRoot(void* server, void* clientConnection);
+extern void handleGetApi(void* server, void* clientConnection);
 
-void rootPathHandler(Server* server, PLATFORM_SOCKET clientConnection);
-void apiHandler(Server* server, PLATFORM_SOCKET clientConnection);
+// Route getter
+const RouteConfig* getRootRoutes(int* count);
 
-#endif 
+// Service getter
+RootService* getRootService(void);
+
+#endif

@@ -9,6 +9,11 @@ void systemServiceInit(SystemService* service) {
     (void)service; 
 }
 
+void systemServiceCleanup(SystemService* service) {
+    (void)service;
+    free(service);
+}
+
 char* getMachineInfo(SystemService* service) {
     (void)service;
     

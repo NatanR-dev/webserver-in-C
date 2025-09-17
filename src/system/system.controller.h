@@ -2,13 +2,19 @@
 #define SYSTEM_CONTROLLER_H
 
 #include "../server/server.h"
+#include "../shared/router/routes.h"
 
 typedef struct SystemService SystemService;
 
-void registerSystemRoutes(Server* server, SystemService* service);
+// Route handlers
+extern void handleGetMachineInfo(void* server, void* clientConnection);
+extern void handleGetOsInfo(void* server, void* clientConnection);
+extern void handleGetSystemInfo(void* server, void* clientConnection);
 
-void machinesHandler(Server* server, PLATFORM_SOCKET clientConnection);
-void osHandler(Server* server, PLATFORM_SOCKET clientConnection);
-void systemInfoHandler(Server* server, PLATFORM_SOCKET clientConnection);
+// Route getter
+const RouteConfig* getSystemRoutes(int* count);
 
-#endif 
+// Service getter
+SystemService* getSystemService(void);
+
+#endif

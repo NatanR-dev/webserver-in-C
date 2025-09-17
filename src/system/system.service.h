@@ -8,6 +8,7 @@ typedef struct SystemService {
 } SystemService;
 
 void systemServiceInit(SystemService* service);
+void systemServiceCleanup(SystemService* service);
 
 char* getMachineInfo(SystemService* service);
 

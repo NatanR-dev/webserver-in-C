@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 // Platform includes
 #include "../shared/platform/platform.h"
@@ -117,48 +118,68 @@ void closeConnection(PLATFORM_SOCKET clientConnection, const char* message) {
     PLATFORM_CLOSE_SOCKET(clientConnection);
 }
 
+
 void handleRequest(Server* server, PLATFORM_SOCKET clientConnection, const char* request) {
     if (server == NULL || request == NULL) {
-        sendErrorResponse(clientConnection, 400, "Bad Request", "Invalid request");
+        closeConnection(clientConnection, "Invalid request");
         return;
     }
     
-    if (clientConnection == INVALID_PLATFORM_SOCKET) {
-        return;
-    }
+    // Parse the request to get the method and path
+    char method[16] = {0};
+    char path[256] = {0};
     
-    if (strncmp(request, "GET ", 4) != 0) {
-        sendErrorResponse(clientConnection, 405, "Method Not Allowed", "Only GET method is supported");
-        return;
-    }
-    
-    const char* path = request + 4;
-    const char* pathEnd = strchr(path, ' ');
-    if (pathEnd == NULL) {
+    // Simple request parsing (this is a simplified version)
+    if (sscanf(request, "%15s %255s", method, path) != 2) {
         sendErrorResponse(clientConnection, 400, "Bad Request", "Invalid request format");
+        closeConnection(clientConnection, NULL);
         return;
     }
     
-    size_t pathLen = (size_t)(pathEnd - path);
-    if (pathLen == 0 || pathLen >= 256) {
-        sendErrorResponse(clientConnection, 400, "Bad Request", "Invalid path length");
-        return;
-    }
+    // Convert method string to enum value
+    int requestMethod = HTTP_GET; // Default to GET
+    if (strcmp(method, "POST") == 0) requestMethod = HTTP_POST;
+    else if (strcmp(method, "PUT") == 0) requestMethod = HTTP_PUT;
+    else if (strcmp(method, "DELETE") == 0) requestMethod = HTTP_DEL; // Changed from HTTP_DELETE to HTTP_DEL
+    else if (strcmp(method, "PATCH") == 0) requestMethod = HTTP_PATCH;
+    else if (strcmp(method, "OPTIONS") == 0) requestMethod = HTTP_OPTIONS;
+    else if (strcmp(method, "HEAD") == 0) requestMethod = HTTP_HEAD;
     
-    char pathCopy[256] = {0};
-    strncpy(pathCopy, path, pathLen);
-    pathCopy[pathLen] = '\0';
-    
+    // Find the matching route
     for (int i = 0; i < server->routeCount; i++) {
-        if (server->routes[i].path != NULL && strcmp(server->routes[i].path, pathCopy) == 0) {
-            server->routes[i].handler(server, clientConnection);
+        if (strcmp(server->routes[i].path, path) == 0 && 
+            server->routes[i].method == (HttpMethod)requestMethod) {
+            // Call the handler with the correct types
+            server->routes[i].handler((void*)server, (void*)(intptr_t)clientConnection);
             return;
         }
     }
     
-    char response[256];
-    snprintf(response, sizeof(response), "{\"error\":\"Not Found\",\"path\":\"%s\"}", pathCopy);
-    sendJsonResponse(clientConnection, response);
+    // Check if path exists but method is not allowed
+    bool pathExists = false;
+    for (int i = 0; i < server->routeCount; i++) {
+        if (strcmp(server->routes[i].path, path) == 0) {
+            pathExists = true;
+            break;
+        }
+    }
+    
+    if (pathExists) {
+        // Method not allowed
+        sendErrorResponse(clientConnection, 405, "Method Not Allowed", 
+                         "The requested method is not allowed for this resource");
+    } else {
+        // Not found
+        char response[512];
+        snprintf(response, sizeof(response), 
+                "HTTP/1.1 404 Not Found\r\n"
+                "Content-Type: application/json\r\n"
+                "Connection: close\r\n"
+                "\r\n"
+                "{\"error\":\"Not Found\",\"path\":\"%s\"}", path);
+        send(clientConnection, response, (int)strlen(response), 0);
+    }
+    
     closeConnection(clientConnection, NULL);
 }
 
