@@ -188,6 +188,25 @@ const App = {
     }
   },
 
+  handleTerminalCommand(command) {
+    const input = this.elements.sharedElements.modal.terminal.input;
+    const machineId = this.currentMachineId;
+    
+    if (command === '/help') {
+      const helpText = 'Available commands:\n  /help - Show this help message\n  /clear - Clear the terminal\n';
+      this.terminalHistory[machineId].push(command + '\n' + helpText);
+    } else if (command === '/clear') {
+      this.terminalHistory[machineId] = [`[ec2-user@machine${machineId} ~]$ `];
+    } else if (command) {
+      this.terminalHistory[machineId].push(command + '\nType /help\n');
+    }
+    
+    this.elements.sharedElements.modal.terminal.output.textContent = this.terminalHistory[machineId].join('');
+    input.value = '';
+    this.elements.sharedElements.modal.terminal.output.scrollTop = 
+      this.elements.sharedElements.modal.terminal.output.scrollHeight;
+  },
+
   setupCursor() {
     const input = this.elements.sharedElements.modal.terminal.input;
     const cursor = this.elements.sharedElements.modal.terminal.cursor;
@@ -203,11 +222,19 @@ const App = {
       const promptWidth = prompt.getBoundingClientRect().width;
       const textWidth = textMeasure.getBoundingClientRect().width;
       cursor.style.left = `${promptWidth + textWidth + 10}px`;
-      //cursor.style.top = `${(input.offsetHeight - 14) / 2}px`;
     };
 
+    input.addEventListener('keydown', (e) => {
+      updateCursorPosition();
+      
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const command = input.value.trim();
+        this.handleTerminalCommand(command);
+      }
+    });
+    
     input.addEventListener('input', updateCursorPosition);
-    input.addEventListener('keydown', updateCursorPosition);
     input.addEventListener('click', updateCursorPosition);
     input.addEventListener('focus', updateCursorPosition);
 
