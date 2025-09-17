@@ -1,7 +1,7 @@
 # Webserver in C
-A Minimal cross-platform HTTP server in C. <br/>
+A Minimal cross-platform HTTP server built in C. <br/>
 - Opens a 8080 port.
-  - Provides a Webserver API with routes.
+  - Provides a Webserver API with router.
 - Uses sockets (`sys/socket.h`, `netinet/in.h`). 
 - Responds with a JSON or HTML.
 - Supports Client connections in a loop (handle requests).<br/> 
@@ -18,28 +18,49 @@ like modern frameworks: <i>Nest, Express.</i>
 
 
 
-### Project Structure
+### Project Arch
 ```
 webserver-in-C/
 ├── src/
-│   ├── handlers/    # Request handlers
-│   ├── routes/      # Route definitions
-│   ├── server/      # Server logic
-│   └── utils/       # Utility functions
-├── obj/            # Compiled objects
-├── Makefile        # Build configuration
-└── src/main.c      # Entry point
+│   ├── root/                # Root module (handles / api routes)
+│   │   ├── root.controller.*  # Route handlers
+│   │   ├── root.module.*      # Module initialization
+│   │   └── root.service.*     # Service logic
+│   │
+│   ├── server/              # Core server implementation
+│   │   ├── server.c         # Server logic
+│   │   └── server.h         # Server interface
+│   │
+│   ├── shared/              # Shared utilities and components
+│   │   ├── formats/         # Data formatting (JSON, etc.)
+│   │   ├── http/            # HTTP protocol handling
+│   │   ├── platform/        # Platform-specific implementations
+│   │   └── router/          # Routing system and decorators
+│   │
+│   └── system/              # System information module
+│       ├── system.controller.*  # System routes
+│       ├── system.module.*      # Module initialization
+│       └── system.service.*     # System info logic
+│
+├── client/                 # Simple Frontend to consume the API
+│   ├── css/
+│   ├── js/
+│   └── index.html
+│
+├── obj/                   # Compiled objects
+└── Makefile              # Build configuration
 
 Routes:
-- GET / - Welcome message
-- GET /api - Basic API response
-- GET /os - OS information
-- GET /system - System information
+-> GET / - Welcome (Root Path with Hateoas)
+-> GET /api - Example API response
+-> GET /api/machine - Machine status
+-> GET /api/os - OS info
+-> GET /api/system - System Specs
 ```
 
 ---
 
-## Setup
+## Plataforms
 - [Windows](#windows)
 - [Linux](#linux-debian-based)
 - [macOS](#macos)

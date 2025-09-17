@@ -188,6 +188,25 @@ const App = {
     }
   },
 
+  handleTerminalCommand(command) {
+    const input = this.elements.sharedElements.modal.terminal.input;
+    const machineId = this.currentMachineId;
+    
+    if (command === '/help') {
+      const helpText = 'Available commands:\n  /help - Show this help message\n  /clear - Clear the terminal\n';
+      this.terminalHistory[machineId].push(command + '\n' + helpText);
+    } else if (command === '/clear') {
+      this.terminalHistory[machineId] = [`[ec2-user@machine${machineId} ~]$ `];
+    } else if (command) {
+      this.terminalHistory[machineId].push(command + '\nType /help\n');
+    }
+    
+    this.elements.sharedElements.modal.terminal.output.textContent = this.terminalHistory[machineId].join('');
+    input.value = '';
+    this.elements.sharedElements.modal.terminal.output.scrollTop = 
+      this.elements.sharedElements.modal.terminal.output.scrollHeight;
+  },
+
   setupCursor() {
     const input = this.elements.sharedElements.modal.terminal.input;
     const cursor = this.elements.sharedElements.modal.terminal.cursor;
@@ -203,11 +222,19 @@ const App = {
       const promptWidth = prompt.getBoundingClientRect().width;
       const textWidth = textMeasure.getBoundingClientRect().width;
       cursor.style.left = `${promptWidth + textWidth + 10}px`;
-      //cursor.style.top = `${(input.offsetHeight - 14) / 2}px`;
     };
 
+    input.addEventListener('keydown', (e) => {
+      updateCursorPosition();
+      
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const command = input.value.trim();
+        this.handleTerminalCommand(command);
+      }
+    });
+    
     input.addEventListener('input', updateCursorPosition);
-    input.addEventListener('keydown', updateCursorPosition);
     input.addEventListener('click', updateCursorPosition);
     input.addEventListener('focus', updateCursorPosition);
 
@@ -378,7 +405,7 @@ const App = {
       const machines = osArray.map((os, index) => {
         const machineInfo = machineArray[index] || machineArray[0] || {};
         const machine = {
-          id: index + 1,
+          id: machineInfo.id || `machine-${index + 1}`,
           os: os.os || 'Unknown',
           powerState: osStatus === 200 && sysStatus === 200 ? 'running' : 'stopped',
           lastLogin: machineInfo.date || os.lastLogin || '2025-09-04 16:53:00',
@@ -386,7 +413,7 @@ const App = {
           location: os.location || 'Unknown',
           status: machineInfo.status || 'unknown',
           info: machineInfo.info || {},
-          loginCount: os.loginCount || Math.floor(Math.random() * 10) + 1,
+          loginCount: os.loginCount || Math.floor(Math.random() * 1) + 1,
           arch: sysArray[index]?.arch || 'Unknown',
           processor: sysArray[index]?.processorArchitecture || 'Unknown',
           cores: sysArray[index]?.numberOfCores || 0,
@@ -396,6 +423,7 @@ const App = {
           snapshots: []
         };
         
+        // Mock data
         machine.loginHistory = this.generateLoginHistory(machine.id, machine.lastLogin, machine.ip, machine.loginCount);
         machine.logs = this.generateLogs(machine.id, machine.lastLogin);
         machine.snapshots = this.generateSnapshots(machine.id, machine.lastLogin);
@@ -523,7 +551,7 @@ const App = {
   renderOverview(machines) {
     const machineHTML = machines.map(machine => {
       const statusClass = machine.status ? `status-${machine.status.toLowerCase()}` : '';
-      const machineId = machine.info?.id || `machine-${machine.id}`;
+      const machineId = machine.info?.id || `${machine.id}`;
       const lastActive = machine.info?.date || machine.lastLogin;
       
       return `
@@ -540,7 +568,7 @@ const App = {
           <td>
             <div class="action-buttons">
               <button class="action-button power-button" data-machine-id="${machine.id}" data-machine-status="${machine.status || 'unknown'}">Power</button>
-              <button class="action-button terminal-button" data-machine-id="${machine.id}" ${machine.status !== 'started' ? 'disabled' : ''}>Terminal</button>
+              <button class="action-button terminal-button" data-machine-id="${machine.id}" ${machine.status.toLowerCase() !== 'started' ? 'disabled' : ''}>Terminal</button>
               <button class="action-button toggle-specs" data-machine-id="${machine.id}">Hide Specs</button>
             </div>
           </td>
@@ -608,7 +636,7 @@ const App = {
   renderMachines(machines) {
     const machineHTML = machines.map(machine => {
       const statusClass = machine.status ? `status-${machine.status.toLowerCase()}` : '';
-      const machineId = machine.info?.id || `machine-${machine.id}`;
+      const machineId = machine.info?.id || `${machine.id}`;
       const lastActive = machine.info?.date || machine.lastLogin;
       
       return `
@@ -621,7 +649,7 @@ const App = {
           <td>
             <div class="action-buttons">
               <button class="action-button power-button" data-machine-id="${machine.id}" data-machine-status="${machine.status || 'unknown'}">Power</button>
-              <button class="action-button terminal-button" data-machine-id="${machine.id}" ${machine.status !== 'started' ? 'disabled' : ''}>Terminal</button>
+              <button class="action-button terminal-button" data-machine-id="${machine.id}" ${machine.status.toLowerCase() !== 'started' ? 'disabled' : ''}>Terminal</button>
               <button class="action-button toggle-specs" data-machine-id="${machine.id}">Hide Specs</button>
             </div>
           </td>
@@ -1021,13 +1049,13 @@ const App = {
             const powerStateCell = row.querySelector('td:nth-child(3)');
             powerStateCell.textContent = result.powerState;
             powerStateCell.className = `power-state-${result.powerState.toLowerCase()}`;
-            const isRunning = result.powerState.toLowerCase() === 'running';
+            const isStarted = result.powerState.toLowerCase() === 'started';
             const terminalButton = row.querySelector(`.terminal-button[data-machine-id="${machineId}"]`);
             if (terminalButton) {
               if (tbodyId === 'overview-machines') {
-                terminalButton.disabled = !isRunning;
+                terminalButton.disabled = !isStarted;
               } else {
-                terminalButton.dataset.disabled = isRunning ? '' : 'true';
+                terminalButton.dataset.disabled = isStarted ? '' : 'true';
               }
               console.log(`Terminal button for machineId ${machineId} set to disabled: ${terminalButton.disabled || terminalButton.dataset.disabled}`);
             }
@@ -1035,9 +1063,10 @@ const App = {
         };
         updatePowerState('overview-machines', 'overview');
         updatePowerState('machines-list', 'machines');
-        this.elements.sharedElements.modal.power.boot.disabled = result.powerState.toLowerCase() === 'running';
-        this.elements.sharedElements.modal.power.reboot.disabled = result.powerState.toLowerCase() !== 'running';
-        this.elements.sharedElements.modal.power.shutdown.disabled = result.powerState.toLowerCase() !== 'running';
+        const isStarted = result.powerState.toLowerCase() === 'started';
+        this.elements.sharedElements.modal.power.boot.disabled = isStarted;
+        this.elements.sharedElements.modal.power.reboot.disabled = !isStarted;
+        this.elements.sharedElements.modal.power.shutdown.disabled = !isStarted;
       }
     } catch (error) {
       statusDiv.textContent = `Error: ${error.message}`;

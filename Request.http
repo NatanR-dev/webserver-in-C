@@ -10,8 +10,11 @@ GET http://localhost:8080
 ### API Route
 GET http://localhost:8080/api 
 
+### Machine Info Route
+GET http://localhost:8080/api/machine
+
 ### OS Route
-GET http://localhost:8080/os 
+GET http://localhost:8080/api/os 
 
 ### System Info Route
-GET http://localhost:8080/sys
+GET http://localhost:8080/api/sys

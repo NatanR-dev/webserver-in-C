@@ -13,8 +13,8 @@ BUILD ?= release
 ifeq ($(OS),Windows_NT)
     # Windows configuration
     CC = gcc
-    CFLAGS = -Wall -Wextra -I./src
-    LDFLAGS = -lws2_32 -liphlpapi
+    CFLAGS = -Wall -Wextra -D_WIN32_WINNT=0x0601 -I$(SRC_DIR) -I$(SRC_DIR)/shared -I$(SRC_DIR)/shared/http -I$(SRC_DIR)/root -I$(SRC_DIR)/system -I$(SRC_DIR)/shared/formats/json -I$(SRC_DIR)/shared/platform
+    LDFLAGS = -lws2_32 -lwinmm -liphlpapi -lrpcrt4 -lole32 -loleaut32 -luuid -lwbemuuid -ladvapi32 -lshell32
     EXECUTABLE = webserver.exe
     RM = del /f /q
     RMDIR = rmdir /s /q
@@ -26,10 +26,13 @@ ifeq ($(OS),Windows_NT)
     # Windows-specific commands
     RM_CMD = $(RM) $(1) $(2) >nul 2>&1 || exit 0
     RMDIR_CMD = if exist $(1) $(RMDIR) $(1) >nul 2>&1
+    
+    # Add Windows-specific defines
+    CFLAGS += -DPLATFORM_WINDOWS -D_WIN32 -DWIN32 -D_WINDOWS
 else
     # Unix-like configuration (Linux, macOS, etc.)
     CC ?= gcc
-    CFLAGS = -Wall -Wextra -I./src
+    CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/shared -I$(INCLUDE_DIR)/shared/http -I$(SRC_DIR)/root -I$(SRC_DIR)/system -I$(INCLUDE_DIR)/shared/formats/json -I$(INCLUDE_DIR)/shared/platform
     LDFLAGS = -pthread  # For multi-threading support on Unix-like systems
     EXECUTABLE = webserver
     RM = rm -f
@@ -52,9 +55,44 @@ else
 endif
 
 # Source files
-SRC_DIR = src
-SRC = $(wildcard $(SRC_DIR)/*.c) \
-      $(wildcard $(SRC_DIR)/*/*.c)
+SRC_DIR = backend/src
+INCLUDE_DIR = $(SRC_DIR)
+
+# Source files
+MAIN_SRC = $(SRC_DIR)/main.c
+
+# Server source files
+SERVER_SRCS = $(SRC_DIR)/shared/http/server/server.c
+
+# Platform-specific source files
+ifeq ($(OS),Windows_NT)
+    PLATFORM_SRCS = $(SRC_DIR)/shared/platform/windows/platform.c
+else
+    PLATFORM_SRCS = $(SRC_DIR)/shared/platform/unix/platform.c
+endif
+
+# Shared source files
+SHARED_SRCS = $(PLATFORM_SRCS) \
+              $(SRC_DIR)/shared/http/response/response.c \
+              $(SRC_DIR)/shared/http/network/network.c \
+              $(SRC_DIR)/shared/http/router/router.c \
+              $(SRC_DIR)/shared/http/router/routes.c
+
+# Module source files
+MODULE_SRCS = $(SRC_DIR)/root/root.module.c \
+              $(SRC_DIR)/root/root.controller.c \
+              $(SRC_DIR)/root/root.service.c \
+              $(SRC_DIR)/system/system.module.c \
+              $(SRC_DIR)/system/system.controller.c \
+              $(SRC_DIR)/system/system.service.c
+
+# All source files
+SRC = $(MAIN_SRC) \
+      $(SERVER_SRCS) \
+      $(SHARED_SRCS) \
+      $(MODULE_SRCS) \
+      $(wildcard $(SRC_DIR)/shared/http/*.c) \
+      $(wildcard $(SRC_DIR)/shared/formats/json/*.c)
 
 # Object files
 OBJ_DIR = obj
@@ -93,9 +131,18 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_SUBDIRS)
 $(OBJ_SUBDIRS):
 	@$(MKDIR) $(call FIXPATH,$@)
 
-# Create necessary directories
+# Create object directory structure
 $(OBJ_DIR):
 	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR))
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/http/server)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/http/response)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/http/network)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/http/router)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/platform/windows)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/platform/unix)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/formats/json)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/root)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/system)
 
 # Clean build artifacts
 clean:
