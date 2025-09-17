@@ -13,7 +13,7 @@ BUILD ?= release
 ifeq ($(OS),Windows_NT)
     # Windows configuration
     CC = gcc
-    CFLAGS = -Wall -Wextra -D_WIN32_WINNT=0x0601 -I$(SRC_DIR) -I$(SRC_DIR)/shared -I$(SRC_DIR)/shared/http -I$(SRC_DIR)/root -I$(SRC_DIR)/system
+    CFLAGS = -Wall -Wextra -D_WIN32_WINNT=0x0601 -I$(SRC_DIR) -I$(SRC_DIR)/shared -I$(SRC_DIR)/shared/http -I$(SRC_DIR)/root -I$(SRC_DIR)/system -I$(SRC_DIR)/shared/formats/json -I$(SRC_DIR)/shared/platform
     LDFLAGS = -lws2_32 -lwinmm -liphlpapi -lrpcrt4 -lole32 -loleaut32 -luuid -lwbemuuid -ladvapi32 -lshell32
     EXECUTABLE = webserver.exe
     RM = del /f /q
@@ -32,7 +32,7 @@ ifeq ($(OS),Windows_NT)
 else
     # Unix-like configuration (Linux, macOS, etc.)
     CC ?= gcc
-    CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/shared -I$(INCLUDE_DIR)/shared/http -I$(SRC_DIR)/root -I$(SRC_DIR)/system
+    CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/shared -I$(INCLUDE_DIR)/shared/http -I$(SRC_DIR)/root -I$(SRC_DIR)/system -I$(INCLUDE_DIR)/shared/formats/json -I$(INCLUDE_DIR)/shared/platform
     LDFLAGS = -pthread  # For multi-threading support on Unix-like systems
     EXECUTABLE = webserver
     RM = rm -f
@@ -55,7 +55,7 @@ else
 endif
 
 # Source files
-SRC_DIR = src
+SRC_DIR = backend/src
 INCLUDE_DIR = $(SRC_DIR)
 
 # Source files
@@ -131,9 +131,18 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_SUBDIRS)
 $(OBJ_SUBDIRS):
 	@$(MKDIR) $(call FIXPATH,$@)
 
-# Create necessary directories
+# Create object directory structure
 $(OBJ_DIR):
 	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR))
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/http/server)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/http/response)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/http/network)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/http/router)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/platform/windows)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/platform/unix)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/formats/json)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/root)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/system)
 
 # Clean build artifacts
 clean:
