@@ -4,6 +4,10 @@
 ifeq ($(OS),Windows_NT)
     SHELL = cmd.exe
     .SHELLFLAGS = /c
+    # Create necessary directories if they don't exist
+    $(shell if not exist "backend\obj" mkdir backend\obj)
+    $(shell if not exist "backend\obj\shared" mkdir backend\obj\shared)
+    $(shell if not exist "backend\obj\shared\validation" mkdir backend\obj\shared\validation)
 endif
 
 # Default build type (can be overridden with: make BUILD=debug)
@@ -13,7 +17,7 @@ BUILD ?= release
 ifeq ($(OS),Windows_NT)
     # Windows configuration
     CC = gcc
-    CFLAGS = -Wall -Wextra -D_WIN32_WINNT=0x0601 -I$(SRC_DIR) -I$(SRC_DIR)/shared -I$(SRC_DIR)/shared/http -I$(SRC_DIR)/root -I$(SRC_DIR)/system -I$(SRC_DIR)/shared/formats/json -I$(SRC_DIR)/shared/platform
+    CFLAGS = -Wall -Wextra -D_WIN32_WINNT=0x0601 -I$(SRC_DIR) -I$(SRC_DIR)/shared -I$(SRC_DIR)/shared/http -I$(SRC_DIR)/root -I$(SRC_DIR)/system -I$(SRC_DIR)/shared/formats/json -I$(SRC_DIR)/shared/platform -I$(SRC_DIR)/shared/validation
     LDFLAGS = -lws2_32 -lwinmm -liphlpapi -lrpcrt4 -lole32 -loleaut32 -luuid -lwbemuuid -ladvapi32 -lshell32
     EXECUTABLE = webserver.exe
     RM = del /f /q
@@ -32,7 +36,7 @@ ifeq ($(OS),Windows_NT)
 else
     # Unix-like configuration (Linux, macOS, etc.)
     CC ?= gcc
-    CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/shared -I$(INCLUDE_DIR)/shared/http -I$(SRC_DIR)/root -I$(SRC_DIR)/system -I$(INCLUDE_DIR)/shared/formats/json -I$(INCLUDE_DIR)/shared/platform
+    CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/shared -I$(INCLUDE_DIR)/shared/http -I$(SRC_DIR)/root -I$(SRC_DIR)/system -I$(INCLUDE_DIR)/shared/formats/json -I$(INCLUDE_DIR)/shared/platform -I$(INCLUDE_DIR)/shared/validation
     LDFLAGS = -pthread  # For multi-threading support on Unix-like systems
     EXECUTABLE = webserver
     RM = rm -f
@@ -72,11 +76,14 @@ else
 endif
 
 # Shared source files
-SHARED_SRCS = $(PLATFORM_SRCS) \
+SHARED_SRCS = $(SRC_DIR)/shared/http/server/server.c \
+              $(SRC_DIR)/shared/http/server/client.handler.c \
               $(SRC_DIR)/shared/http/response/response.c \
-              $(SRC_DIR)/shared/http/network/network.c \
               $(SRC_DIR)/shared/http/router/router.c \
-              $(SRC_DIR)/shared/http/router/routes.c
+              $(SRC_DIR)/shared/http/router/routes.c \
+              $(SRC_DIR)/shared/formats/json/json.c \
+              $(PLATFORM_SRCS) \
+              $(wildcard $(SRC_DIR)/shared/validation/*.c)
 
 # Module source files
 MODULE_SRCS = $(SRC_DIR)/root/root.module.c \
@@ -88,11 +95,8 @@ MODULE_SRCS = $(SRC_DIR)/root/root.module.c \
 
 # All source files
 SRC = $(MAIN_SRC) \
-      $(SERVER_SRCS) \
       $(SHARED_SRCS) \
-      $(MODULE_SRCS) \
-      $(wildcard $(SRC_DIR)/shared/http/*.c) \
-      $(wildcard $(SRC_DIR)/shared/formats/json/*.c)
+      $(MODULE_SRCS)
 
 # Object files
 OBJ_DIR = obj
@@ -136,13 +140,13 @@ $(OBJ_DIR):
 	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR))
 	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/http/server)
 	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/http/response)
-	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/http/network)
 	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/http/router)
 	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/platform/windows)
 	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/platform/unix)
 	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/formats/json)
 	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/root)
 	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/system)
+	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/validation)
 
 # Clean build artifacts
 clean:

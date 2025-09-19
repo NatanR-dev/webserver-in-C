@@ -18,12 +18,22 @@ void jsonEscapeString(const char* input, char* output, size_t outputSize);
 
 /**
  * @brief Creates a JSON object string from key-value pairs
- * @param buffer The buffer to store the JSON string
+ * @param buffer Buffer to store the JSON string
  * @param bufferSize Size of the buffer
- * @param count Number of key-value pairs
- * @param ... Key-value pairs as const char* (key1, value1, key2, value2, ...)
- * @return int Number of characters written (excluding null terminator)
+ * @param count Number of key-value pairs (must be even)
+ * @param ... Key-value pairs (const char* key, const char* value, ...)
+ * @return Pointer to the buffer, or NULL on error
  */
-int createJsonObject(char* buffer, size_t bufferSize, int count, ...);
+char* createJsonObject(char* buffer, size_t bufferSize, int count, ...);
+
+/**
+ * @brief Extracts a string value from a JSON object
+ * @param json The JSON string to parse
+ * @param key The key to extract
+ * @param value Buffer to store the extracted value
+ * @param value_size Size of the value buffer
+ * @return 1 if successful, 0 on error
+ */
+int jsonExtractString(const char* json, const char* key, char* value, size_t value_size);
 
 #endif 

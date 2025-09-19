@@ -1,24 +1,50 @@
-// Common includes
+// Common 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
-// Platform includes
-#include "../../platform/platform.h"
+// Platform
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <windows.h>
+    #include <io.h>
+    #include <fcntl.h>
+    #define PLATFORM_SHUT_RDWR SD_BOTH
+#else
+    #include <unistd.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <netdb.h>
+    #include <fcntl.h>
+    #define PLATFORM_SHUT_RDWR SHUT_RDWR
+#endif
 
-// Shared HTTP includes
+// Shared HTTP 
 #include "../network/network.h"
 
-// Server includes
+// Server 
 #include "server.h"
 #include "../router/router.h"
 #include "../response/response.h"
 
 // Constants
 #define PORT 8080
-#define BUFFER_SIZE 4096
 
+static const char* httpMethodToString(HttpMethod method) {
+    switch (method) {
+        case HTTP_GET:     return "GET";
+        case HTTP_POST:    return "POST";
+        case HTTP_PUT:     return "PUT";
+        case HTTP_DEL:     return "DELETE";
+        case HTTP_PATCH:   return "PATCH";
+        case HTTP_OPTIONS: return "OPTIONS";
+        case HTTP_HEAD:    return "HEAD";
+        default:           return "UNKNOWN";
+    }
+}
 
 void initSockets(void) {
     if (platformNetworkingInit() != 0) {
@@ -40,6 +66,7 @@ int initializeServer(Server* server, int port) {
     server->port = port;
     server->routeCount = 0;
     server->socket = INVALID_PLATFORM_SOCKET;
+    server->requestBody = NULL;
     
     server->socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (server->socket == INVALID_PLATFORM_SOCKET) {
@@ -120,18 +147,41 @@ void closeConnection(PLATFORM_SOCKET clientConnection, const char* message) {
 
 
 void handleRequest(Server* server, PLATFORM_SOCKET clientConnection, const char* request) {
+    printf("LOG: Handling new request\n");
+    
     if (server == NULL || request == NULL) {
+        printf("ERROR: Invalid parameters to handleRequest\n");
         closeConnection(clientConnection, "Invalid request");
         return;
     }
     
+    printf("LOG: Request: %.*s...\n", 100, request);
+    
     char method[16] = {0};
     char path[256] = {0};
+    char* body = NULL;
     
     if (sscanf(request, "%15s %255s", method, path) != 2) {
         sendErrorResponse(clientConnection, 400, "Bad Request", "Invalid request format");
         closeConnection(clientConnection, NULL);
         return;
+    }
+    
+    char* headerEnd = strstr(request, "\r\n\r\n");
+    if (headerEnd) {
+        body = headerEnd + 4; 
+        
+        if (strcmp(method, "POST") == 0 || strcmp(method, "PUT") == 0) {
+            char* contentLengthHeader = strstr(request, "Content-Length: ");
+            if (contentLengthHeader) {
+                int contentLength = atoi(contentLengthHeader + 16); 
+                size_t bodyLength = strlen(body);
+                
+                if (bodyLength < (size_t)contentLength) {
+                    body[bodyLength] = '\0';
+                }
+            }
+        }
     }
     
     int requestMethod = HTTP_GET; 
@@ -142,13 +192,28 @@ void handleRequest(Server* server, PLATFORM_SOCKET clientConnection, const char*
     else if (strcmp(method, "OPTIONS") == 0) requestMethod = HTTP_OPTIONS;
     else if (strcmp(method, "HEAD") == 0) requestMethod = HTTP_HEAD;
     
+    if ((requestMethod == HTTP_POST || requestMethod == HTTP_PUT) && body) {
+        server->requestBody = body;
+    }
+    
+    printf("LOG: Looking for route: %s %s\n", method, path);
+    
     for (int i = 0; i < server->routeCount; i++) {
+        printf("LOG: Checking route %d: %s %s\n", i, 
+               httpMethodToString(server->routes[i].method), 
+               server->routes[i].path);
+               
         if (strcmp(server->routes[i].path, path) == 0 && 
             server->routes[i].method == (HttpMethod)requestMethod) {
+            printf("LOG: Found matching route, calling handler\n");
             server->routes[i].handler((void*)server, (void*)(intptr_t)clientConnection);
+            server->requestBody = NULL; 
+            printf("LOG: Handler completed\n");
             return;
         }
     }
+    
+    printf("LOG: No matching route found\n");
     
     bool pathExists = false;
     for (int i = 0; i < server->routeCount; i++) {

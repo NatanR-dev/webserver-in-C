@@ -1,11 +1,33 @@
 # Webserver in C
 A Minimal cross-platform HTTP server built in C. <br/>
 - Opens a 8080 port.
-  - Provides a Webserver API with router.
+  - Provides a Webserver API with routing system.
+  - Root path with hateoas listing:
+    - GET  /api/machine
+    - POST /api/machine
+    - GET  /api/os
+    - GET  /api/system
 - Uses sockets (`sys/socket.h`, `netinet/in.h`). 
-- Responds with a JSON or HTML.
+  - Threads.
+  - JSON formatting.
+  - Platform-specific implementations.
 - Supports Client connections in a loop (handle requests).<br/> 
-  - Returns (ok) --> HTTP 200 status code.
+  - MAX ROUTES 
+  - BUFFER_SIZE 
+  - MAX_CLIENTS 
+  - PORT 
+  - Logs 
+- Responds with a JSON or HTML. <br/>
+  - GET returns (ok) 
+    - HTTP 200 status code.
+  - POST returns (created) 
+    - HTTP 201 status code.
+  - GET returns (not found) 
+    - HTTP 404 status code.
+  - GET returns (bad request) 
+    - HTTP 400 status code.
+  - GET/POST returns (internal server error) 
+    - HTTP 500 status code.
 <br/>  
 
 ---  
@@ -22,38 +44,40 @@ like modern frameworks: <i>Nest, Express.</i>
 ```
 webserver-in-C/
 ├── src/
-│   ├── root/                # Root module (handles / api routes)
-│   │   ├── root.controller.*  # Route handlers
-│   │   ├── root.module.*      # Module initialization
-│   │   └── root.service.*     # Service logic
+│   ├── root/                    # Root module 
+│   │   ├── root.controller.*    # Route routes / handlers
+│   │   ├── root.module.*        # Module initialization
+│   │   └── root.service.*       # Service logic
 │   │
-│   ├── server/              # Core server implementation
-│   │   ├── server.c         # Server logic
-│   │   └── server.h         # Server interface
+│   ├── system/                  # System specs module 
+│   │   ├── system.controller.*  # System routes / handlers
+│   │   ├── system.module.*      # Module initialization
+│   │   └── system.service.*     # System info logic
 │   │
-│   ├── shared/              # Shared utilities and components
-│   │   ├── formats/         # Data formatting (JSON, etc.)
-│   │   ├── http/            # HTTP protocol handling
-│   │   ├── platform/        # Platform-specific implementations
-│   │   └── router/          # Routing system and decorators
+│   ├── shared/                  # Shared utilities and components
+│   │   ├── formats/             # Data formatting (JSON, etc.)
+│   │   ├── http/                # HTTP protocol handling
+│   │   │   ├── network/         # Network utilities
+│   │   │   ├── response/        # HTTP response handling
+│   │   │   ├── router/          # Routing system and decorators
+│   │   │   └── server/          # Core HTTP server implementation
+│   │   └── platform/            # Platform-specific implementations
 │   │
-│   └── system/              # System information module
-│       ├── system.controller.*  # System routes
-│       ├── system.module.*      # Module initialization
-│       └── system.service.*     # System info logic
+│   └── main.c                   # Initialize the webserver
 │
-├── client/                 # Simple Frontend to consume the API
+├── client/                      # Simple Frontend to consume the API
 │   ├── css/
 │   ├── js/
 │   └── index.html
 │
-├── obj/                   # Compiled objects
-└── Makefile              # Build configuration
+├── obj/                         # Compiled objects
+└── Makefile                     # Build configuration
 
 Routes:
 -> GET / - Welcome (Root Path with Hateoas)
 -> GET /api - Example API response
 -> GET /api/machine - Machine status
+-> POST /api/machine - Add machine name
 -> GET /api/os - OS info
 -> GET /api/system - System Specs
 ```
@@ -158,3 +182,22 @@ make clean
 
 ---
 
+>_Hey, if you find this project useful, please consider giving it a ⭐ on [GitHub](https://github.com/yourusername/webserver-in-C)!_
+
+## Contributing
+Contributions are welcome! Please see [CONTRIBUTING](CONTRIBUTING.md) for guidelines.
+
+>Feel free to fork the repository and submit pull requests with your improvements.
+
+## License
+[![GNU GPLv3](https://www.gnu.org/graphics/gplv3-127x51.png)](https://www.gnu.org/licenses/gpl-3.0)
+
+This project is licensed under the [GNU GPLv3](LICENSE) © 2025
+
+<div style="text-align:center;">
+<br/>
+<br/>
+<h2 alt="Hail Stallman!">🤘Hɐıan Sʇanɯau</h2>
+<br/>
+<a href="https://www.gnu.org/philosophy/free-sw.html"><img src="https://upload.wikimedia.org/wikipedia/commons/8/83/The_GNU_logo.png" width="250px" _target="_blank"></a>
+</div>

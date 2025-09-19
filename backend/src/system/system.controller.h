@@ -6,7 +6,10 @@
 
 typedef struct SystemService SystemService;
 
+extern SystemService* systemService;
+
 extern void handleGetMachineInfo(void* server, void* clientConnection);
+extern void handlePostMachineName(void* server, void* clientConnection);
 extern void handleGetOsInfo(void* server, void* clientConnection);
 extern void handleGetSystemInfo(void* server, void* clientConnection);
 

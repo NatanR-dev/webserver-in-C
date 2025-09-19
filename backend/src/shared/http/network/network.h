@@ -14,4 +14,4 @@
  */
 int getLocalIP(char* ip, size_t ipSize);
 
-#endif // NETWORK_UTILS_H
+#endif 
