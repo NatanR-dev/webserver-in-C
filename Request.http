@@ -1,20 +1,26 @@
-// Use Rest Client Extension 
-   // --> code --install-extension humao.rest-client
-      // OR --> Ctrl+Shift+X > humao.rest-client
+// Use Rest Client Extension --> code --install-extension humao.rest-client OR --> Ctrl+Shift+X > humao.rest-client
 
 #<Just starts down bellow>
 
-### Root Path
+### GET Root Path
 GET http://localhost:8080
 
-### API Route
+### GET API Route
 GET http://localhost:8080/api 
 
-### Machine Info Route
+### GET Machine Info Route
 GET http://localhost:8080/api/machine
 
-### OS Route
+### POST Machine Name 
+POST http://localhost:8080/api/machine
+Content-Type: application/json
+
+{
+  "machineName": "vm-dev-08"
+}
+
+### GET OS Route
 GET http://localhost:8080/api/os 
 
-### System Info Route
+### GET System Info Route
 GET http://localhost:8080/api/sys

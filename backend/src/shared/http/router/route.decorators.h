@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 
-// HTTP Methods
 typedef enum {
     HTTP_GET,
     HTTP_POST,
@@ -14,7 +13,6 @@ typedef enum {
     HTTP_HEAD
 } HttpMethod;
 
-// Route handler function type
 typedef void (*RouteHandlerFunc)(void* server, void* clientConnection);
 
 // Route configuration

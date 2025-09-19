@@ -47,7 +47,7 @@ char* getRootInfo(RootService* service, Server* server) {
         "{\n"
         "   \"message\": \"Welcome to low-level C API\",\n"
         "   \"version\": \"1.0\",\n"
-        "   \"quick_start\": %s\n"
+        "   \"quickStart\": %s\n"
         "}",
         routes);
         

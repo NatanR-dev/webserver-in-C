@@ -1,32 +1,18 @@
-// Common includes
+// Common 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 
-// Platform-specific includes and definitions
+// Platform 
 #include "shared/platform/platform.h"
-#include "shared/http/response/response.h"
 
-// Imports
+// Server
 #include "shared/http/server/server.h"
+
+// Modules
 #include "root/root.module.h"
 #include "system/system.module.h"
-
-// Constants
-#define BUFFER_SIZE 4096
-
-void handleClient(Server* server, PLATFORM_SOCKET clientConnection) {
-    char buffer[BUFFER_SIZE] = {0};
-    
-    int bytesRead = recv(clientConnection, buffer, BUFFER_SIZE - 1, 0);
-    
-    if (bytesRead > 0) {
-        buffer[bytesRead] = '\0';
-        handleRequest(server, clientConnection, buffer);
-    }
-    
-    closeConnection(clientConnection, NULL);
-}
 
 int main()
 {

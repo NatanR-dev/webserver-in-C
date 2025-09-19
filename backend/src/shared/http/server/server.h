@@ -13,8 +13,8 @@
 
 // Constants
 #define MAX_ROUTES 50
+#define BUFFER_SIZE 8192  
 
-// Forward declarations
 typedef struct Server Server;
 
 typedef struct Server {
@@ -22,6 +22,7 @@ typedef struct Server {
     int port;  
     RouteConfig routes[MAX_ROUTES];
     int routeCount;
+    const char* requestBody;  
 } Server;
 
 int initializeServer(Server* server, int port);
@@ -33,6 +34,7 @@ int addRoute(Server* server, const char* path, RouteHandlerFunc handler);
 int addRouteMethod(Server* server, const char* path, RouteHandlerFunc handler, int method);
 
 void handleRequest(Server* server, PLATFORM_SOCKET clientConnection, const char* request);
+void handleClient(Server* server, PLATFORM_SOCKET clientConnection);
 
 void sendResponse(PLATFORM_SOCKET clientConnection, const char* response);
 void sendJsonResponse(PLATFORM_SOCKET clientConnection, const char* json);

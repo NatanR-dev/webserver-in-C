@@ -1,16 +1,38 @@
 #include "system.service.h"
 #include "../../shared/formats/json/json.h"
 #include "../../shared/platform/platform.h"
-#include <time.h>
+#include "../../shared/validation/validation.h"
+#include "../../shared/http/response/response.h"
+
 #include <string.h>
+#include <time.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <strings.h> 
 
 void systemServiceInit(SystemService* service) {
-    (void)service; 
+    if (service) {
+        service->machineName = strdup("Default Machine");
+        service->usedNames.count = 0;
+        memset(service->usedNames.names, 0, sizeof(service->usedNames.names));
+        
+        addMachineName(service, service->machineName);
+    }
 }
 
+
 void systemServiceCleanup(SystemService* service) {
-    (void)service;
+    if (service) {
+        free(service->machineName);
+        service->machineName = NULL;
+        
+        for (size_t i = 0; i < service->usedNames.count; i++) {
+            free(service->usedNames.names[i]);
+            service->usedNames.names[i] = NULL;
+        }
+        service->usedNames.count = 0;
+    }
     free(service);
 }
 
@@ -36,11 +58,20 @@ char* getMachineInfo(SystemService* service) {
     char dateTime[20];
     strftime(dateTime, sizeof(dateTime), "%Y-%m-%d %H:%M:%S", tm_info);
     
-    createJsonObject(result, 1024, 4,
-        "status", "Started",
-        "id", machineId,
-        "ip", ip,
-        "date", dateTime);
+    if (service && service->machineName && strcmp(service->machineName, "Default Machine") != 0) {
+        createJsonObject(result, 1024, 5,
+            "status", "Started",
+            "id", machineId,
+            "ip", ip,
+            "date", dateTime,
+            "machineName", service->machineName);
+    } else {
+        createJsonObject(result, 1024, 4,
+            "status", "Started",
+            "id", machineId,
+            "ip", ip,
+            "date", dateTime);
+    }
         
     return result;
 }
@@ -63,6 +94,65 @@ char* getOsInfo(SystemService* service) {
     
     createJsonObject(result, 256, 1, "os", osName);
     return result;
+}
+
+bool isMachineNameUsed(const SystemService* service, const char* name) {
+    if (!service || !name) return false;
+    
+    for (size_t i = 0; i < service->usedNames.count; i++) {
+        if (service->usedNames.names[i] && strcasecmp(service->usedNames.names[i], name) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool addMachineName(SystemService* service, const char* name) {
+    if (!service || !name || service->usedNames.count >= MAX_MACHINE_NAMES) {
+        return false;
+    }
+    
+    if (isMachineNameUsed(service, name)) {
+        return false;
+    }
+    
+    char* newName = strdup(name);
+    if (!newName) return false;
+    
+    service->usedNames.names[service->usedNames.count++] = newName;
+    return true;
+}
+
+bool setMachineName(SystemService* service, const char* name, char* error, size_t error_size) {
+    if (!service || !name) {
+        createErrorJson(error, error_size, "Invalid service or name");
+        return false;
+    }
+    
+    if (!validateMachineName(name, error, error_size)) {
+        return false;
+    }
+    
+    if (isMachineNameUsed(service, name)) {
+        char message[256];
+        snprintf(message, sizeof(message), "Machine name '%s' is already in use", name);
+        createErrorJson(error, error_size, message);
+        return false;
+    }
+    
+    if (!addMachineName(service, name)) {
+        createErrorJson(error, error_size, "Failed to add machine name");
+        return false;
+    }
+    
+    free(service->machineName);
+    service->machineName = strdup(name);
+    if (!service->machineName) {
+        createErrorJson(error, error_size, "Failed to allocate memory for machine name");
+        return false;
+    }
+    
+    return true;
 }
 
 char* getSystemInfo(SystemService* service) {
