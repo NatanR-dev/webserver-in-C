@@ -1,5 +1,8 @@
 # Webserver in C
 A Minimal cross-platform HTTP server built in C. <br/>
+
+https://github.com/user-attachments/assets/97f9860b-77f3-4874-b2e3-84e0eabbd061
+
 - Opens a 8080 port.
   - Provides a Webserver API with routing system.
   - Root path with hateoas listing:
