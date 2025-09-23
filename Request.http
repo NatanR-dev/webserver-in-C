@@ -16,7 +16,7 @@ POST http://localhost:8080/api/machine
 Content-Type: application/json
 
 {
-  "machineName": "my-vm-dev-01"
+  "machineName": "vm-dev-08"
 }
 
 ### GET OS Route
