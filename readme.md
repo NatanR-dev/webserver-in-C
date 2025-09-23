@@ -1,17 +1,5 @@
 # Webserver in C
 A Minimal cross-platform HTTP server built in C. <br/>
-
-<video 
-  src="https://pouch.jumpshare.com/preview/E3xY0iIPrdOf-Mw6IqK_3cdqDZIUrCyhN_1ZwFj0mpD_-VruTeM-PCoS8uLu25AnKP2BXzjfXxGMPfwe8y2yMmIrGAPK7iO5ZJ_533CXDXEDXJ5PCVJO4lyeduEtAGtfLMK0IVEzxjXddnMjLgdBoG6yjbN-I2pg_cnoHs_AmgI.mp4" 
-  controls 
-  width="100%" 
-  style="max-width: 800px; border-radius: 8px; margin: 1rem 0;"
-  preload="metadata"
-  poster="https://i.ibb.co/YFDjgCDW/Screenshot-2814.png"
-  aria-label="Demonstração do servidor web em funcionamento">
-  Your browser does not support the video tag. You can <a href="https://pouch.jumpshare.com/preview/e2u10c6WorLNthl5g_3n-4YgBvyAlRmqCkHn9e2ZoIlloFDN3t8DnUoY7raTztpurNRt-XVdlwu7vOJFuBVeBWIrGAPK7iO5ZJ_533CXDXEDXJ5PCVJO4lyeduEtAGtfhLI7Ji_Jtz8h3VcT_hc2M26yjbN-I2pg_cnoHs_AmgI.mp4">baixar o vídeo</a>.
-</video>
-
 - Opens a 8080 port.
   - Provides a Webserver API with routing system.
   - Root path with hateoas listing:
