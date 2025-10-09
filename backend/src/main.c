@@ -13,6 +13,7 @@
 // Modules
 #include "root/root.module.h"
 #include "system/system.module.h"
+#include "users/users.module.h" // Module generated with CLI
 
 int main()
 {
@@ -26,6 +27,7 @@ int main()
 
     rootModuleInit(&server);
     systemModuleInit(&server);
+    usersModuleInit(&server);
 
     printf("Server started on port %d, waiting for connections...\n", server.port);
     
@@ -42,6 +44,7 @@ int main()
 
     systemModuleCleanup(&server);
     rootModuleCleanup(&server);
+    usersModuleCleanup(&server); // Generated with CLI
     cleanupServer(&server);
     cleanupSockets();
     return 0;

@@ -15,9 +15,9 @@ BUILD ?= release
 
 # Detect OS and set variables accordingly
 ifeq ($(OS),Windows_NT)
-    # Windows configuration
+    # Windows-specific variables
     CC = gcc
-    CFLAGS = -Wall -Wextra -D_WIN32_WINNT=0x0601 -I$(SRC_DIR) -I$(SRC_DIR)/shared -I$(SRC_DIR)/shared/http -I$(SRC_DIR)/root -I$(SRC_DIR)/system -I$(SRC_DIR)/shared/formats/json -I$(SRC_DIR)/shared/platform -I$(SRC_DIR)/shared/validation
+    CFLAGS = -Wall -Wextra -D_WIN32_WINNT=0x0601 -I$(SRC_DIR) -I$(SRC_DIR)/shared -I$(SRC_DIR)/shared/http -I$(SRC_DIR)/shared/formats/json -I$(SRC_DIR)/shared/platform -I$(SRC_DIR)/shared/validation
     LDFLAGS = -lws2_32 -lwinmm -liphlpapi -lrpcrt4 -lole32 -loleaut32 -luuid -lwbemuuid -ladvapi32 -lshell32
     EXECUTABLE = webserver.exe
     RM = del /f /q
@@ -34,10 +34,10 @@ ifeq ($(OS),Windows_NT)
     # Add Windows-specific defines
     CFLAGS += -DPLATFORM_WINDOWS -D_WIN32 -DWIN32 -D_WINDOWS
 else
-    # Unix-like configuration (Linux, macOS, etc.)
+    # Unix-like-specific variables (Linux, macOS, etc.)
     CC ?= gcc
-    CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/shared -I$(INCLUDE_DIR)/shared/http -I$(SRC_DIR)/root -I$(SRC_DIR)/system -I$(INCLUDE_DIR)/shared/formats/json -I$(INCLUDE_DIR)/shared/platform -I$(INCLUDE_DIR)/shared/validation
-    LDFLAGS = -pthread  # For multi-threading support on Unix-like systems
+    CFLAGS = -Wall -Wextra -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/shared -I$(INCLUDE_DIR)/shared/http -I$(SRC_DIR)/shared/formats/json -I$(INCLUDE_DIR)/shared/platform -I$(INCLUDE_DIR)/shared/validation
+    LDFLAGS = -pthread
     EXECUTABLE = webserver
     RM = rm -f
     MKDIR = mkdir -p
@@ -62,18 +62,8 @@ endif
 SRC_DIR = backend/src
 INCLUDE_DIR = $(SRC_DIR)
 
-# Source files
+# Main source file
 MAIN_SRC = $(SRC_DIR)/main.c
-
-# Server source files
-SERVER_SRCS = $(SRC_DIR)/shared/http/server/server.c
-
-# Platform-specific source files
-ifeq ($(OS),Windows_NT)
-    PLATFORM_SRCS = $(SRC_DIR)/shared/platform/windows/platform.c
-else
-    PLATFORM_SRCS = $(SRC_DIR)/shared/platform/unix/platform.c
-endif
 
 # Shared source files
 SHARED_SRCS = $(SRC_DIR)/shared/http/server/server.c \
@@ -82,24 +72,30 @@ SHARED_SRCS = $(SRC_DIR)/shared/http/server/server.c \
               $(SRC_DIR)/shared/http/router/router.c \
               $(SRC_DIR)/shared/http/router/routes.c \
               $(SRC_DIR)/shared/formats/json/json.c \
-              $(PLATFORM_SRCS) \
               $(wildcard $(SRC_DIR)/shared/validation/*.c)
 
-# Module source files
-MODULE_SRCS = $(SRC_DIR)/root/root.module.c \
-              $(SRC_DIR)/root/root.controller.c \
-              $(SRC_DIR)/root/root.service.c \
-              $(SRC_DIR)/system/system.module.c \
-              $(SRC_DIR)/system/system.controller.c \
-              $(SRC_DIR)/system/system.service.c
+# Platform-specific source files
+ifeq ($(OS),Windows_NT)
+    PLATFORM_SRCS = $(SRC_DIR)/shared/platform/windows/platform.c
+else
+    PLATFORM_SRCS = $(SRC_DIR)/shared/platform/unix/platform.c
+endif
+
+# Dynamically find all module directories and their source files
+MODULE_DIRS = $(filter-out $(SRC_DIR)/shared,$(wildcard $(SRC_DIR)/*/))
+MODULE_SRCS = $(foreach dir,$(MODULE_DIRS),$(wildcard $(dir)*.c))
+
+# Update include paths to include all module directories
+CFLAGS += $(foreach dir,$(MODULE_DIRS),-I$(dir))
 
 # All source files
 SRC = $(MAIN_SRC) \
       $(SHARED_SRCS) \
+      $(PLATFORM_SRCS) \
       $(MODULE_SRCS)
 
 # Object files
-OBJ_DIR = obj
+OBJ_DIR = backend/obj
 OBJ = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC))
 
 # Create obj directory structure
@@ -124,8 +120,6 @@ $(EXECUTABLE): $(OBJ)
 	@$(CC) -o $@ $^ $(LDFLAGS)
 	@echo "Build successful: $(EXECUTABLE) ($(BUILD))"
 
-# Run the application
-
 # Pattern rule for .c files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_SUBDIRS)
 	@echo "Compiling $<..."
@@ -144,9 +138,8 @@ $(OBJ_DIR):
 	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/platform/windows)
 	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/platform/unix)
 	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/formats/json)
-	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/root)
-	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/system)
 	@$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/shared/validation)
+	@$(foreach dir,$(MODULE_DIRS),$(MKDIR) $(call FIXPATH,$(OBJ_DIR)/$(patsubst $(SRC_DIR)/%,%,$(dir))) || exit 0;)
 
 # Clean build artifacts
 clean:

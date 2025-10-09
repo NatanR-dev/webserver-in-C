@@ -8,6 +8,9 @@ GET http://localhost:8080
 ### GET API Route
 GET http://localhost:8080/api 
 
+### GET Users Route
+GET http://localhost:8080/users
+
 ### GET Machine Info Route
 GET http://localhost:8080/api/machine
 
